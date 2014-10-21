@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin spec="2.0" name="org.sipesc.fems.scriptassist" version="2.0.0" icon=":/sipesc/images/org.sipesc.fems.scriptassist/provider-icon.png" label="org.sipesc.fems.scriptassist" author="SiPESC Software Group" copyright="SiPESC" documenturl="sipdoc://org.sipesc.fems.scriptassist/overview.html" description="to assist handle fems extension for script.">
+  <feature name="org.sipesc.fems.matrixassist" version="2.0.0" label="org.sipesc.fems.matrixassist" documenturl="sipdoc://org.sipesc.fems.matrixassist/overview.html">
+    <extension name="MVectorAssistor" uuid="{45c8dd64-6c3e-42a6-bf2f-cd749ab3de6e}" creatable="true" scriptable="true" description="to assist convert  MVectorData  to MVector." category="org.sipesc.fems.scriptassist">
+      <methods>
+        <method name="trans" scriptable="true" description="trans method">
+          <return type="org.sipesc.fems.matrix.MVector" default="org.sipesc.fems.matrix.MVector()" description="the return MVector."/>
+          <parameter name="data" type="org.sipesc.fems.matrix.MVectorData" description="the MVectorData"/>
+        </method>
+      </methods>
+    </extension>
+    <extension name="MMatrixAssistor" uuid="{45c8dd64-6c3e-42a6-bf2f-cd749ab3de6e}" creatable="true" scriptable="true" description="to assist convert  MMatrixData  to MMatrix." category="org.sipesc.fems.scriptassist">
+      <methods>
+        <method name="setMatrixData" scriptable="true" description="set the MMatrixData">
+          <parameter name="data" type="org.sipesc.fems.matrix.MMatrixData" access="const reference" description="set the MMatrixData data"/>
+        </method>
+        <method name="setStiffMatrixData" scriptable="true" description="Set the MElementStiffMatrixData">
+          <parameter name="data" type="org.sipesc.fems.matrix.MElementStiffMatrixData" access="const reference" description="the give MMatrixData"/>
+        </method>
+        <method name="getRowCount" access="const" scriptable="true" description="get the Rows Count">
+          <return type="int" default="0" description="return the rows count"/>
+        </method>
+        <method name="getColCount" access="const" scriptable="true" description="get the cols count">
+          <return type="int" default="0" description="return the cols count"/>
+        </method>
+        <method name="getColumn" scriptable="true" description="get the give index column">
+          <return type="QVector&lt;double&gt;" default="QVector&lt;double&gt;()" description="return the columns"/>
+          <parameter name="col" type="int" description="the give index"/>
+        </method>
+      </methods>
+    </extension>
+  </feature>
+  <feature name="org.sipesc.fems.importorassist" version="2.0.0" label="org.sipesc.fems.importorassist" documenturl="sipdoc://org.sipesc.fems.importorassist/overview.html">
+    <extension name="MDataImportAssistor" uuid="{19e8513e-26fb-4583-a583-de78464ec185}" creatable="true" scriptable="true" description="to assist the MDataImportor for script." category="org.sipesc.fems.bdfimport">
+      <bases>
+        <base name="org.sipesc.utilities.MTask"/>
+      </bases>
+      <methods>
+        <method name="importFile" scriptable="true" description="import files">
+          <return type="bool" default="false" description="if succeed return true, otherwise return false"/>
+          <parameter name="fileName" type="QString" access="const reference" description="file name"/>
+        </method>
+      </methods>
+    </extension>
+    <extension name="MTransDataImport" uuid="{d16e0894-ce7d-43de-88dd-931f9b1a04ac}" creatable="true" scriptable="true" description="Import the transient result data." category="org.sipesc.fems.bdfimport">
+      <bases>
+        <base name="org.sipesc.utilities.MTask"/>
+      </bases>
+      <methods>
+        <method name="import" scriptable="true" description="import files">
+          <return type="bool" default="false" description="if succeed return true, otherwise return false"/>
+          <parameter name="fileName" type="QString" access="const reference" description="file name"/>
+        </method>
+        <method name="getDt" scriptable="true" description="get dt">
+          <return type="double" default="0.0" description="return dt"/>
+        </method>
+        <method name="getNt" scriptable="true" description="get nt">
+          <return type="int" default="0" description="return nt"/>
+        </method>
+        <method name="getUX" scriptable="true" description="get the UX for every time">
+          <return type="QList&lt;double&gt;" default="QList&lt;double&gt;()" description="return the given node's UX for every time"/>
+          <parameter name="nodeId" type="int" description="the given node"/>
+        </method>
+      </methods>
+    </extension>
+  </feature>
+</plugin>

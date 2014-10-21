@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin spec="2.0" name="org.sipesc.fems.bltdataprocess" version="2.0.0" icon=":/sipesc/images/org.sipesc.fems.bltdataprocess/provider-icon.png" label="org.sipesc.fems.bltdataprocess" author="SiPESC Software Group" copyright="Designed and implemented by SiPESC Software Group." documenturl="sipdoc://org.sipesc.fems.bltdataprocess/overview.html" description="BLT数据处理：*.jfd数据导入，*.out数据导出">
+  <feature name="org.sipesc.fems.jfdimport" version="2.0.0" label="org.sipesc.fems.jfdimport" documenturl="sipdoc://org.sipesc.fems.jfdimport/overview.html" description="*.jfd数据导入">
+    <extension name="MJfdDataImportorFactory" uuid="{ca660282-d5d1-4955-989e-8a54c5ccdfdd}" creatable="true" scriptable="true" description="Jfd数据读入总控文件的工厂" category="fems.factory.dataimportor">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdDataImportor" uuid="{a4f18ba3-7ea0-47a3-ab0b-c7207288f9e0}" creatable="true" scriptable="true" description="importing *.jfd file" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.bdfimport.MDataImportor"/>
+      </bases>
+    </extension>
+    <extension name="MJfdEntryHandler" uuid="{fc410ed2-83de-4430-8d91-06c76644cf93}" scriptable="true" description="处理 *.jfd 数据." category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.utilities.MTask"/>
+      </bases>
+      <methods>
+        <method name="handleEntry" scriptable="true" description="处理特定模块数据">
+          <return type="bool" default="false" description="if succeed, return true; otherwise return false"/>
+          <parameter name="stream" type="QTextStream" access="pointer" description="*.jfd文件数据流"/>
+          <parameter name="logStream" type="QTextStream" access="pointer" description="*.log 文件数据流"/>
+          <parameter name="num" type="int" access="const reference" description="本模块数据个数"/>
+        </method>
+      </methods>
+    </extension>
+    <extension name="MJfdSubEntryHandler" uuid="{bea4c253-0004-4503-80d6-8b9a47721e7f}" scriptable="true" description="处理 *.jfd 数据." category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.utilities.MTask"/>
+      </bases>
+      <methods>
+        <method name="handleEntry" scriptable="true" description="处理特定模块数据">
+          <return type="bool" default="false" description="if succeed, return true; otherwise return false"/>
+          <parameter name="stream" type="QTextStream" access="pointer" description="*.jfd文件数据流"/>
+          <parameter name="logStream" type="QTextStream" access="pointer" description="*.log 文件数据流"/>
+          <parameter name="value" type="QVector&lt;QVariant&gt;" access="const reference" description="数据参数"/>
+        </method>
+      </methods>
+    </extension>
+    <extension name="MJfdNodeHandlerFactory" uuid="{2ca445b3-d59f-42cd-b245-21573666b21a}" creatable="true" scriptable="true" description="the factory for MJfdNodeHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdNodeHandler" uuid="{45e71e91-54a9-4e6e-8187-148ad0b33ad3}" creatable="true" scriptable="true" description="处理*.jfd文件中的节点数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MJfdMPCHandlerFactory" uuid="{e76a6868-5d06-4b81-b85e-8965f801803e}" creatable="true" scriptable="true" description="the factory for MJfdMPCHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdMPCHandler" uuid="{982435b6-93b4-4f58-811c-2d0ca4b78297}" creatable="true" scriptable="true" description="处理*.jfd文件中的MPC数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MJfdLineElementHandlerFactory" uuid="{a1323a81-e822-4d9f-931b-031261b56328}" creatable="true" scriptable="true" description="the factory for MJfdLineElementHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdLineElementHandler" uuid="{6f7d4877-ea2a-466b-865d-de6dc4a1be68}" creatable="true" scriptable="true" description="处理*.jfd文件中的LineElement数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MJfd3DSolidElementHandlerFactory" uuid="{fd44b8c4-f92c-42de-a840-f5063620b9db}" creatable="true" scriptable="true" description="the factory for MJfd3DSolidElementHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfd3DSolidElementHandler" uuid="{71fba634-7eac-4cdd-8cce-76c8da2614dc}" creatable="true" scriptable="true" description="处理*.jfd文件中的3D实体单元数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdSubEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MJfdNLineElementHandlerFactory" uuid="{287be09f-8b6b-41fc-bd70-e982302ebc10}" creatable="true" scriptable="true" description="the factory for MJfdNLineElementHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdNLineElementHandler" uuid="{c0f9714e-429f-4ddf-a501-9b78bfaa614a}" creatable="true" scriptable="true" description="处理*.jfd文件中的NLineElement数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MJfdCrodElementHandlerFactory" uuid="{d92d2f4a-9af2-4224-aba4-d78c919c83b1}" creatable="true" scriptable="true" description="the factory for MJfdCrodElementHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdCrodElementHandler" uuid="{01f9a1ad-31c1-4397-8c8f-6cbb374ebe51}" creatable="true" scriptable="true" description="处理*.jfd文件中的杆单元数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdSubEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MJfdForceHandlerFactory" uuid="{86c53323-849d-465d-aa30-f04f7d3be907}" creatable="true" scriptable="true" description="the factory for MJfdForceHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdForceHandler" uuid="{7094d65c-3764-40df-8b31-0754b342098b}" creatable="true" scriptable="true" description="处理*.jfd文件中的FORCE数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MJfdGravHandlerFactory" uuid="{8a1e062b-eb25-4c37-af2c-1210c1cf2f3d}" creatable="true" scriptable="true" description="the factory for MJfdGravHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdGravHandler" uuid="{166416c2-adb6-48af-8bd0-5042ad65dc96}" creatable="true" scriptable="true" description="处理*.jfd文件中的Grav数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MTABLED5Parser" uuid="{002f91b6-5243-4070-92ec-9a21e861905e}" creatable="true" scriptable="true" description="the Parser for TABLED5." category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.femsutils.MTableParser"/>
+      </bases>
+    </extension>
+  </feature>
+  <feature name="org.sipesc.fems.bltexport" version="2.0.0" label="org.sipesc.fems.bltexport" documenturl="sipdoc://org.sipesc.fems.bltexport/overview.html" description="*.out数据导出">
+    <extension name="MBltDataExportor" uuid="{c129246f-bd12-49df-9954-3015881ed19e}" creatable="true" scriptable="true" description="export *.out file" category="org.sipesc.fems.bltexport">
+      <bases>
+        <base name="org.sipesc.utilities.MTaskManager"/>
+      </bases>
+    </extension>
+    <extension name="MJfdDataExportor" uuid="{35642a78-7382-46db-bc63-456bc404cc1c}" scriptable="true" description="export  *.out data file" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.utilities.MTaskManager"/>
+      </bases>
+    </extension>
+    <extension name="MJfdNodeDataExportor" uuid="{8c3a0d7f-cd92-4c2f-895f-12852ce51d78}" scriptable="true" description="exporting node data to *.out file" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfxexport.MDataExportor"/>
+      </bases>
+    </extension>
+  </feature>
+</plugin>

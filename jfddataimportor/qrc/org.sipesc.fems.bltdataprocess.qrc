@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="sipesc/images/org.sipesc.fems.bltdataprocess">
+    <file>provider-icon.png</file>
+  </qresource>
+</RCC>
