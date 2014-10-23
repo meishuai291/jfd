@@ -75,20 +75,20 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 //  pluginManager.addListener(&debugger);
 
 	bool ok;
-	ok = pluginManager.loadAllPlugins();
-	if(!ok){
-		std::cout << "Failed to load All Plugins." << std::endl;
+	QStringList apList;
+
+//	ok = pluginManager.loadAllPlugins();
+//	if(!ok){
+//		std::cout << "Failed to load All Plugins." << std::endl;
+//	}
+//  apList = pluginManager.getLoadedPluginList();
+//  apList = pluginManager.getAvailablePluginList();
+	apList << "org.sipesc.fems.addplugin";
+	apList << "org.sipesc.fems.bltdataprocess";
+	for (int i = 0; i < apList.count(); i++){
+		ok = pluginManager.loadPlugin(apList[i]);
+		std::cout << ok << " - " << i+1 << " - " << apList[i].toStdString() << std::endl;
 	}
-//	bool ok = pluginManager.loadPlugin("org.sipesc.fems.addplugin");
-	Q_ASSERT(ok);
-	
-//  QStringList plugList = pluginManager.getLoadedPluginList();
-//  QStringList apList = pluginManager.getAvailablePluginList();
-//  for (int i = 0; i < apList.count(); i++){
-//        std::cout << i << " - " << apList[i].toStdString() << std::endl;
-//        ok = pluginManager.loadPlugin(apList[i]);
-//        std::cout << ok << std::endl;
-//  }
 
 	QDir::setCurrent(workSpace); //设置工作目录为给定目录
 

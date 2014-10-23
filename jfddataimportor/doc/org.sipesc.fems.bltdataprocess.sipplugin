@@ -127,7 +127,11 @@
         <base name="org.sipesc.utilities.MExtensionFactory"/>
       </bases>
     </extension>
-    <extension name="MJfdShellElementHandler" uuid="{3e4a8a0e-cc3d-448a-beb3-a0b3566271f8}" creatable="true" scriptable="true" description="处理*.jfd文件中的shell数据" category="org.sipesc.fems.jfdimport.MJfdEntryHandler"/>
+    <extension name="MJfdShellElementHandler" uuid="{3e4a8a0e-cc3d-448a-beb3-a0b3566271f8}" creatable="true" scriptable="true" description="处理*.jfd文件中的shell数据" category="org.sipesc.fems.jfdimport.MJfdEntryHandler">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdSubEntryHandler"/>
+      </bases>
+    </extension>
   </feature>
   <feature name="org.sipesc.fems.bltexport" version="2.0.0" label="org.sipesc.fems.bltexport" documenturl="sipdoc://org.sipesc.fems.bltexport/overview.html" description="*.out数据导出">
     <extension name="MBltDataExportor" uuid="{c129246f-bd12-49df-9954-3015881ed19e}" creatable="true" scriptable="true" description="export *.out file" category="org.sipesc.fems.bltexport">

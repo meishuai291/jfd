@@ -407,6 +407,7 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 		return true;
 	}
 	_data->_stream.setDevice(&file); //定义文件数据流
+	_data->_stream.setCodec("GBK");
 
 	/*
 	 * 2) 创建log文件，定义log文件数据流
@@ -433,6 +434,14 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 //	qDebug() << _data->_blockNum;
 //	qDebug() << _data->_ansysType; //分析类型
 //	qDebug() << _data->_modalNum; //阵型个数
+
+	qDebug() << "NODE:" << _data->_blockNum[NODE];
+	qDebug() << "MPC:" << _data->_blockNum[MPC];
+	qDebug() << "LINEELEMENT:" << _data->_blockNum[LINEELEMENT];
+	qDebug() << "NLINEELEMENT:" << _data->_blockNum[NLINEELEMENT];
+	qDebug() << "FORCE:" << _data->_blockNum[FORCE];
+	qDebug() << "GRAV:" << _data->_blockNum[GRAV];
+
 
 	MExtensionManager extManager = MExtensionManager::getManager();
 	MSharedVariablesManager sharedVariables = extManager.createExtension(

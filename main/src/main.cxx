@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
 		Test mainTest = Test();
 		mainTest.initTestCase(programName, workSpace);
-//		return 0;
+
 		mainTest.import(jfd);
 
 		mainTest.solve(jfd);
