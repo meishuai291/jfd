@@ -57,6 +57,7 @@ public:
 	MDataModel _propertyRefPath;
 	MDataManager _general;
 	MDataManager _geometry;
+	MDataManager _eleGroup;//单元组数据
 
 	QString _readLine() //读取一行，并显示状态，以及log写入
 	{
@@ -182,6 +183,17 @@ bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 		return false;
 	}
 
+	_data->_eleGroup = _data->_baseManager.createDataManager();
+	ok = _data->_eleGroup.open(_data->_model, "EleGroup");
+	if (!ok)
+	{
+		QString errorMessage = "can't open EleGroup DataManager "
+				" in MJfdCrodElementHandlerImpl::initialize() ";
+		qDebug() << errorMessage;
+		_data->_monitor.setMessage(errorMessage);
+		return false;
+	}
+
 	_data->_isInitialized = true;
 	return true;
 }
@@ -237,6 +249,9 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 	int nEle = value[0].toInt();//本组单元数
 	QString matType = value[1].toString();//本组材料类型
 	int nMat = value[2].toInt();//本组材料种类数
+	int eleGroupId =  value[3].toInt();//本组单元组号
+
+	QList<int> eles;//本组单元号List
 
 	//先处理材料
 	/*
@@ -305,7 +320,7 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 		MElementData eleData = factory.createObject();//默认，每组单元号严格按照1～nEle 排列
 		int eleId = eleCount + line.mid(0,5).toInt();// |0~4|   :单元号
 		int  ematId = matCount + line.mid(15,5).toInt();//|15~19|:材料号
-
+		eles.append(eleId);
 		/*
 		[5]
 		 *  |0~5|     :node1
@@ -332,6 +347,21 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 		property.setPropertyId(_data->_elesGlobal.getValue(MElementsGlobal::MaterialId), ematId);
 		property.setPropertyId(_data->_elesGlobal.getValue(MElementsGlobal::GeometryId), ematId);
 		_data->_general.appendData(property);
+	}
+
+	{
+		QString dataType = "org.sipesc.fems.data.propertydata";
+		MDataFactory factory = _data->_factoryManager.getFactory(dataType);
+		Q_ASSERT(!factory.isNull());
+		int ecnt = eles.count();
+		MPropertyData elesGroupData = factory.createObject();
+		Q_ASSERT(!elesGroupData.isNull());
+		elesGroupData.setType(_data->_elesGlobal.getValue(MElementsGlobal::BarElement));
+		elesGroupData.setId(eleGroupId);
+		elesGroupData.setValueCount(ecnt);
+		for (int i = 0; i < ecnt; i++)
+			elesGroupData.setValue(i,eles[i]);
+		_data->_eleGroup.appendData(elesGroupData);
 	}
 
 	return true;

@@ -27,13 +27,14 @@
 #include <mextensionmanager.h>
 #include <org.sipesc.core.utility.utilitymanager.h>
 #include <org.sipesc.core.utility.progressmonitor.h>
-
+#include <org.sipesc.utilities.msharedvariablesmanager.h>
 #include <org.sipesc.fems.global.mfemsglobal.h>
 #include <QDate>
 #include <iostream>
 using namespace std;
 using namespace org::sipesc::fems::data;
 using namespace org::sipesc::core::utility;
+using namespace org::sipesc::utilities;
 using namespace org::sipesc::fems::global;
 using namespace org::sipesc::core::engdbs::data;
 using namespace org::sipesc::fems::matrixassist;
@@ -45,17 +46,18 @@ public:
 		_isRepeated = false;
 		_elegroupcnt = 0;
 		_objManager = MObjectManager::getManager();
-//		_extManager = MExtensionManager::getManager();
+		_extManager = MExtensionManager::getManager();
 	}
 public:
 	MObjectManager _objManager;
-//	MExtensionManager _extManager;
+	MExtensionManager _extManager;
 	ProgressMonitor _monitor;
 	MDatabaseManager _dbManager;
+	MFemsGlobal _femsGlobal;
 	bool _isRepeated;
 	bool _isInitialized;
 
-	MDataModel _model;
+	MDataModel _model, _elementPath;
 	MDataManager _LcaseManager, _EleGroupManager;
 
 	MVectorFactory _vFactory;
@@ -67,7 +69,11 @@ public:
 	bool ControllingInfoOutput(QTextStream* stream, QString fileName);
 	bool NodeInfoOutput(QTextStream* stream);
 	bool ElementInfoOutput(QTextStream* stream);
-	bool ResultsOutput(QTextStream* stream);
+	bool SolidElementInfoOutput(QTextStream* stream,int);
+	bool RodElementInfoOutput(QTextStream* stream,int);
+	bool ShellElementInfoOutput(QTextStream* stream,int);
+	bool StaticResultsOutput(QTextStream* stream);
+	bool DynamicResultsOutput(QTextStream* stream);
 };
 
 MBltResultHeaderExportorImpl::MBltResultHeaderExportorImpl() {
@@ -89,6 +95,9 @@ MBltResultHeaderExportorImpl::MBltResultHeaderExportorImpl() {
 
 	_data->_vFactory = _data->_objManager.getObject("org.sipesc.fems.matrix.vectorfactory");
 	Q_ASSERT(!_data->_vFactory.isNull());
+
+	_data->_femsGlobal = _data->_objManager.getObject("org.sipesc.fems.global.femsglobal");
+	Q_ASSERT(!_data->_femsGlobal.isNull());
 }
 
 MBltResultHeaderExportorImpl::~MBltResultHeaderExportorImpl() {
@@ -110,10 +119,27 @@ ProgressMonitor MBltResultHeaderExportorImpl::getProgressMonitor() const {
 
 bool MBltResultHeaderExportorImpl::dataExport(QTextStream* stream,
 		QString fileName) {
+	/**
+	 * 未处理
+	 *   EQUATION NUMBERS
+	 *   C O N S T R A I N T   E Q U A T I O N S   D A T A
+	 */
 	_data->ControllingInfoOutput(stream, fileName);
 	_data->NodeInfoOutput(stream);
 	_data->ElementInfoOutput(stream);
-	_data->ResultsOutput(stream);
+
+	MSharedVariablesManager sharedVariables = _data->_extManager.createExtension(
+			"org.sipesc.utilities.MSharedVariablesManager");
+	Q_ASSERT(!sharedVariables.isNull());
+	sharedVariables.initialize(_data->_model);
+
+	QString analysis = sharedVariables.getVariable(
+			_data->_femsGlobal.getValue(MFemsGlobal::AnalysisType)).toString();
+
+	if(analysis == _data->_femsGlobal.getValue(MFemsGlobal::Static))
+		_data->StaticResultsOutput(stream);
+	else
+		_data->DynamicResultsOutput(stream);
 	return true;
 }
 
@@ -211,11 +237,7 @@ bool MBltResultHeaderExportorImpl::Data::NodeInfoOutput(QTextStream* stream) {
 }
 //*************************单元信息输出*************************//
 bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) {
-	printf("Writing Element Message ...\n");
-
-	QString str;
-
-	str.append(" E L E M E N T   G R O U P   D A T A \n\n\n\n");
+	std::cout << "Writing Element Message ..." <<std::endl;
 
 	_EleGroupManager = _dbManager.createDataManager();
 	bool isOk = _EleGroupManager.open(_model, "EleGroup");
@@ -228,8 +250,8 @@ bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) 
 	}
 	_elegroupcnt = _EleGroupManager.getDataCount();
 
-	MDataModel ElementPathModel = _dbManager.createDataModel();
-	isOk = ElementPathModel.open(_model, "ElementPath");
+	_elementPath = _dbManager.createDataModel();
+	isOk = _elementPath.open(_model, "ElementPath");
 	if(!isOk){
 		QString errorMessage = "can't open ElementPath DataManager "
 				"in MBltResultHeaderExportorImpl::Data::ElementInfoOutput() ";
@@ -238,79 +260,174 @@ bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) 
 		return false;
 	}
 
+	//-----------------------------------------
+	QString str;
+	str += " E L E M E N T   G R O U P   D A T A \n\n\n\n";
+	(*stream) << str;
+
 	int i = 0;
 	while (i < _elegroupcnt) {
-		cout << "The EleGroup Count " << _elegroupcnt << " now in " << i+1 << "\n";
+		std::cout << "The EleGroup Count " << _elegroupcnt << " now in " << i+1 <<std::endl;
 
 		MPropertyData eleGroup = _EleGroupManager.getDataAt(i);
-
 		int gId = eleGroup.getId();
-		QString groupId = blank(gId, 5);     ///=号后9位，gid在前5位
-		str.append("E L E M E N T   G R O U P ........................... =" + groupId + "    ( LINEAR )\n\n\n\n");
+		QString type = eleGroup.getType();
 
-		QString stmp ="   12   12    1    0    1    0    1  0.0000E+00  0.0000E+00      0";
-
-		MDataManager EleManager = _dbManager.createDataManager();
-		isOk = EleManager.open(ElementPathModel, eleGroup.getType());
-		if(!isOk){
-			QString errorMessage = QString("can't open %1 DataManager "
-					"in MBltResultHeaderExportorImpl::Data::ElementInfoOutput() ").arg(eleGroup.getType());
-			mReportError(M_ERROR_FATAL, errorMessage);
-			_monitor.setMessage(errorMessage);
-			return false;
+		if(type == "HexaBrickElement"){
+			SolidElementInfoOutput(stream, gId);
+		}else if(type == "Hexa12BrickElement"){
+			SolidElementInfoOutput(stream, gId);
+		}else if(type == "BarElement"){
+			RodElementInfoOutput(stream, gId);
+		}else if(type == "QuadDKQShElement"){
+			ShellElementInfoOutput(stream, gId);
 		}
-
-		int Elecount = eleGroup.getValueCount() / 2;
-		str.append(eleMseg(Elecount, i+1));
-		for (int j = 0; j < Elecount; j++) {
-			QString sEid = blank(j + 1, 5);
-
-			MElementData eleData1 = EleManager.getData(
-					eleGroup.getValue(2 * j).toInt());
-			MElementData eleData2 = EleManager.getData(
-					eleGroup.getValue(2 * j + 1).toInt());
-
-			QString SnodeId = " ";
-			int gnc = eleData1.getNodeCount();
-			for (int ttt = 0; ttt < 4; ttt++) {
-				int nodeId = eleData1.getNodeId(ttt);
-				SnodeId = SnodeId + blank(nodeId, 6) + QString(" ");
-			}
-			for (int t = 4; t < 8; t++) {
-				int nodeId = eleData2.getNodeId(t);
-				SnodeId = SnodeId + blank(nodeId, 6) + " ";
-			}
-			SnodeId =
-					SnodeId + "\n"
-							+ "                                                                             0      0      0      0      0      0      0      0\n";
-			SnodeId =
-					SnodeId
-							+ "                                                                        ";
-
-			for (int t = 0; t < 4; t++) {
-				int nodeId = eleData2.getNodeId(t);
-				SnodeId = SnodeId + blank(nodeId, 6) + " ";
-			}
-
-			SnodeId = SnodeId + "     0      0      0      0\n";
-			SnodeId =
-					SnodeId
-							+ "                                                                             0      0      0\n\n";
-
-			str.append(sEid + stmp + SnodeId);   //存入一个单元块信息
-		}
-
 		i = i + 1;
 	}
-	str.append("TOTAL SYSTEM DATA\n");
-	str.append("\n\n\n\n\n\n                                         * E N D   O F   D A T A   P R I N T *\n\n\n\n\n");
+
+	QString end = "TOTAL SYSTEM DATA\n";
+	end += "\n\n\n\n\n\n                                         * E N D   O F   D A T A   P R I N T *\n\n\n\n\n";
+	(*stream) << end;
+
+	return true;
+}
+bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* stream,int id){
+
+	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
+	QString solidHeader = "    M IELD IELX  IPS  ISV MTYP MAXES   KG    ETIME      ETIME2    INTLOC NODE 1 NODE 2 NODE 3 NODE 4 NODE 5 NODE 6 NODE 7 NODE 8 \n";
+	solidHeader += "                                                                         NODE 9 NODE10 NODE11 NODE12 NODE13 NODE14 NODE15 NODE16 \n";
+	solidHeader += "                                                                         NODE17 NODE18 NODE19 NODE20 NODE21 NODE22 NODE23 NODE24 \n";
+	solidHeader += "                                                                         NODE25 NODE26 NODE27 \n\n";
+	solidHeader += "                                                              STRESS TABLE                         GLOBAL  COORDINATES \n";
+	solidHeader += "                                                                  POINT                          X           Y           Z \n";
+	QString solidEH ="   12   12    1    0    1    0    1  0.0000E+00  0.0000E+00      0";
+
+
+	MPropertyData eleGroup = _EleGroupManager.getData(id);
+	QString type = eleGroup.getType();
+	int Elecount = eleGroup.getValueCount();
+	if(type == "HexaBrickElement"){
+		Elecount /= 2;
+	}
+
+	MDataManager EleManager = _dbManager.createDataManager();
+	bool isOk = EleManager.open(_elementPath, type);
+	if(!isOk){
+		QString errorMessage = QString("can't open %1 DataManager "
+				"in MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput() ").arg(eleGroup.getType());
+		mReportError(M_ERROR_FATAL, errorMessage);
+		_monitor.setMessage(errorMessage);
+		return false;
+	}
+
+	QString str;
+	QString groupId = blank(id, 5);     ///=号后9位，gid在前5位
+	str.append("E L E M E N T   G R O U P ........................... =" + groupId + "    ( LINEAR )\n\n\n\n");
+//	str.append(eleMseg(Elecount, id));
+	str.append(eleHeader);
+	str.append(solidHeader);
+
+	for (int j = 0; j < Elecount; j++) {
+		QString sEid = blank(j + 1, 5);
+
+		MElementData eleData1 = EleManager.getData(
+				eleGroup.getValue(2 * j).toInt());
+		MElementData eleData2 = EleManager.getData(
+				eleGroup.getValue(2 * j + 1).toInt());
+
+		QString SnodeId = " ";
+		int gnc = eleData1.getNodeCount();
+		for (int ttt = 0; ttt < 4; ttt++) {
+			int nodeId = eleData1.getNodeId(ttt);
+			SnodeId = SnodeId + blank(nodeId, 6) + QString(" ");
+		}
+		for (int t = 4; t < 8; t++) {
+			int nodeId = eleData2.getNodeId(t);
+			SnodeId = SnodeId + blank(nodeId, 6) + " ";
+		}
+		SnodeId =
+				SnodeId + "\n"
+						+ "                                                                             0      0      0      0      0      0      0      0\n";
+		SnodeId =
+				SnodeId
+						+ "                                                                        ";
+
+		for (int t = 0; t < 4; t++) {
+			int nodeId = eleData2.getNodeId(t);
+			SnodeId = SnodeId + blank(nodeId, 6) + " ";
+		}
+
+		SnodeId = SnodeId + "     0      0      0      0\n";
+		SnodeId =
+				SnodeId
+						+ "                                                                             0      0      0\n\n";
+
+		str.append(sEid + solidEH + SnodeId);   //存入一个单元块信息
+	}
 
 	(*stream) << str;
 	return true;
 }
+bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* stream,int id){
+
+	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
+	QString rodHeader = "    N IELD  IPS  ISV  MTYP   KG    INITIAL       GAP        LENGTH        ETIME       ETIME2     INTLOC   NODE1  NODE2  NODE3  NODE4 \n";
+	rodHeader += "                                   STRAIN       WIDTH                                 INTEGRATION       GLOBAL  COORDINATES \n";
+	rodHeader += "                                                                                         POINT      X            Y            Z \n";
+	rodHeader += "                                                                  POINT                          X           Y           Z \n";
+	QString rodEH ="    2    1    0     1    1   0.0000E+00   0.0000E+00 ";
+	QString rodEH2 ="   0.0000E+00   0.0000E+00       0";
+
+	MPropertyData eleGroup = _EleGroupManager.getData(id);
+	QString type = eleGroup.getType();
+	int Elecount = eleGroup.getValueCount();
+
+	MDataManager EleManager = _dbManager.createDataManager();
+	bool isOk = EleManager.open(_elementPath, type);
+	if(!isOk){
+		QString errorMessage = QString("can't open %1 DataManager "
+				"in MBltResultHeaderExportorImpl::Data::RodElementInfoOutput() ").arg(eleGroup.getType());
+		mReportError(M_ERROR_FATAL, errorMessage);
+		_monitor.setMessage(errorMessage);
+		return false;
+	}
+
+	QString str;
+	QString groupId = blank(id, 5);     ///=号后9位，gid在前5位
+	str.append("E L E M E N T   G R O U P ........................... =" + groupId + "    ( LINEAR )\n\n\n\n");
+//	str.append(eleMseg(Elecount, id));
+	str.append(eleHeader);
+	str.append(rodHeader);
+
+	for (int j = 0; j < Elecount; j++) {
+		QString sEid = blank(j + 1, 5);
+		QString length = kexue(0,5,12);
+
+		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
+
+		QString SnodeId = " ";
+		int gnc = eleData1.getNodeCount();
+		for (int ttt = 0; ttt < gnc; ttt++) {
+			int nodeId = eleData1.getNodeId(ttt);
+			SnodeId += blank(nodeId, 8);
+		}
+		str.append(sEid + rodEH + length + rodEH2 + SnodeId);   //存入一个单元块信息
+		str += "\n\n";
+	}
+
+	(*stream) << str;
+
+	return true;
+}
+bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* stream,int id){
+	QString shellEH;
+
+
+	return true;
+}
 
 //****************************计算结果输出*************************//
-bool MBltResultHeaderExportorImpl::Data::ResultsOutput(QTextStream* stream) {
+bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream) {
 
 	bool isOk;
 
@@ -448,6 +565,90 @@ bool MBltResultHeaderExportorImpl::Data::ResultsOutput(QTextStream* stream) {
 	return true;
 }
 
+bool MBltResultHeaderExportorImpl::Data::DynamicResultsOutput(QTextStream* stream) {
+
+	bool isOk;
+
+	MDataManager evManager = _dbManager.createDataManager();
+	isOk = evManager.open(_model, _femsGlobal.getValue(MFemsGlobal::EigenValues), true);
+	if (!isOk){
+		QString errorMessage = "can't open EigenValues DataManager "
+				"in MBltResultHeaderExportorImpl::Data::DynamicResultsOutput() ";
+		mReportError(M_ERROR_FATAL, errorMessage);
+		_monitor.setMessage(errorMessage);
+		return false;
+	}
+	MVectorData eigenVectorData = evManager.getDataAt(0);
+	if(eigenVectorData.isNull()){
+		QString errorMessage = QString("In MBltResultHeaderExportorImpl::Data::DynamicResultsOutput()"
+						" ****** EigenValues Data is Null.");
+		mReportError(M_ERROR_FATAL, errorMessage);
+		_monitor.setMessage(errorMessage);
+		return false;
+	}
+	MVector eigenValues = _vFactory.createVector();
+	eigenValues << eigenVectorData;
+
+	MDataModel DisPathModel = _dbManager.createDataModel();
+	isOk = DisPathModel.open(_model, "DisplacementPath");
+	Q_ASSERT(isOk);
+	MDataManager DisManager = _dbManager.createDataManager();
+
+	int count = DisPathModel.getTypeCount(MDatabaseGlobal::ManagerType);
+	int count2 = eigenValues.getCount();
+
+	QString strr = "   F R E Q U E N C I E S \n\n";
+	strr += "      FREQUENCY NUMBER            FREQUENCY (RAD/SEC)      FREQUENCY (CYCLES/SEC)        PERIOD (SECONDS) \n\n";
+	for(int i=0;i<count2;i++){
+		double val = eigenValues(i);
+		double freqR = pow(val,0.5);
+		double freqC = freqR/2/3.1415926;
+		double sec = 1/freqC;
+		strr += blank(i+1,13) + "         ";
+		strr += kexue(freqR, 5, 26);
+		strr += kexue(freqC, 5, 26);
+		strr += kexue(sec, 5, 26);
+		strr += "\n";
+	}
+	strr += "\n";
+	strr += "      NOTE - READ TIME UNIT 'SEC' AS OTHER TIME UNIT IF OTHER TIME UNIT IS USED\n";
+	strr += "\n\n\n\n\n";
+	(*stream) << strr;
+
+
+	for (int order=1; order<count; order++){
+
+		QString str = QString("   M O D E  S H A P E  N O .   %1                                                       ").arg(order);
+		str += "( FREQUENCY =  " + kexue(pow(eigenValues(order-1),0.5), 5, 10) + " RAD/SEC )\n";
+		str += "\n\n";
+		str += "  NODE   X-TRANSLATION  Y-TRANSLATION  Z-TRANSLATION  X/V1-ROTATION  Y/V2-ROTATION  Z/VN-ROTATION  FLUID PHI/P0*  REF SYST  REF SYST\n";
+		str += "                                                                                                                  TRAN-DOF  ROT- DOF\n";
+		str += "\n";
+
+		bool isOk = DisManager.open(DisPathModel, QString::number(order));
+		int Dcnt = DisManager.getDataCount();
+		for (int nId = 1; nId <= Dcnt; nId++) {
+
+			MVectorData DisData = DisManager.getData(nId);
+			Q_ASSERT(!DisData.isNull());
+			MVector nodeDisV = _vFactory.createVector();
+			Q_ASSERT(!nodeDisV.isNull());
+			nodeDisV << DisData;
+
+			str += blank(nId, 6) + " ";
+			for (int dx = 0; dx < nodeDisV.getCount(); dx++){
+				str += kexue(double(nodeDisV(dx)), 7, 15);
+
+			}
+			str += "  0.000000E+00    GLOBAL    GLOBAL \n";
+		}
+
+		str.append("\n\n\n");
+		(*stream) << str;
+	}
+
+	return true;
+}
 //*************************格式函数*************************//
 
 QString MBltResultHeaderExportorImpl::Data::blank(int s, int i)         /////补空格
@@ -606,18 +807,6 @@ QString MBltResultHeaderExportorImpl::Data::eleMseg(int NEle, int GId) {
  \n\
  \n\
           1      1      2      3      4      5      6      7      8      0      0      0      0      0      0      0      0 \n\n\n\n";
-
-	eleMseg += " E L E M E N T   I N F O R M A T I O N  \n \
- \n \
- \n \
-     M IELD IELX  IPS  ISV MTYP MAXES   KG    ETIME      ETIME2    INTLOC NODE 1 NODE 2 NODE 3 NODE 4 NODE 5 NODE 6 NODE 7 NODE 8\n \
-                                                                          NODE 9 NODE10 NODE11 NODE12 NODE13 NODE14 NODE15 NODE16\n \
-                                                                          NODE17 NODE18 NODE19 NODE20 NODE21 NODE22 NODE23 NODE24\n \
-                                                                          NODE25 NODE26 NODE27\n \
- \n \
-                                                               STRESS TABLE                         GLOBAL  COORDINATES\n \
-                                                                   POINT                          X           Y           Z\n \
- \n";
 
 	return eleMseg;
 }

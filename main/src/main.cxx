@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 		
 		mainTest.output(out);
 
-		mainTest.cleanupTestCase();
+//		mainTest.cleanupTestCase();
 
 		std::cout << "\n***************Finite Element Analysis Complete!***************" << std::endl;
 	}

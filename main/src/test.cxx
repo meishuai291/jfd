@@ -267,7 +267,7 @@ void Test::import(const QString& importName)
 	MAnalysisFlowCommands analysisCommands = analysisFactory.createExtension();
 	_taskCommands = analysisCommands.getFlowCommands();
 	QVector<QString>::iterator vi = _taskCommands.end();
-	_taskCommands.erase(vi-1);
+//	_taskCommands.erase(vi-1);
 
 	return;
 }
