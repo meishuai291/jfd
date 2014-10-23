@@ -21,7 +21,9 @@
 #include <mjfdgravhandlerfactoryimpl.h>
 #include <mjfdgravhandlerimpl.h>
 #include <mtabled5parserimpl.h>
-
+//
+#include <mjfdshellelementhandlerfactoryimpl.h>
+#include <mjfdshellelementhandlerimpl.h>
 
 //
 #include <mbltdataexportorimpl.h>
@@ -166,6 +168,16 @@ MExtensionObject* OrgSipescFemsBltdataprocessPlugin
 ::createOrgSipescFemsJfdimportMTABLED5Parser()
   {
 	return new MTABLED5ParserImpl;
+  }
+MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+::createOrgSipescFemsJfdimportMJfdShellElementHandlerFactory()
+  {
+  return new MJfdShellElementHandlerFactoryImpl;
+  }
+MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+::createOrgSipescFemsJfdimportMJfdShellElementHandler()
+  {
+  return new MJfdShellElementHandlerImpl;
   }
 MExtensionObject* OrgSipescFemsBltdataprocessPlugin
 ::createOrgSipescFemsBltexportMBltDataExportor()

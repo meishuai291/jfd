@@ -34,12 +34,11 @@ SET(org_sipesc_fems_bltdataprocess_src_files
     src/mjfdgravhandlerimpl.cxx
     src/mtabled5parserimpl.cxx
     
+    src/mjfdshellelementhandlerimpl.cxx
+    
     src/mbltdataexportorimpl.cxx
     src/mbltresultheaderexportorimpl.cxx
 #    src/mbltresultexportorimpl.cxx
-#    src/mjfddataexportorimpl.cxx
-#    src/mjfdnodedataexportorimpl.cxx    
-    
 )
 
 SET(org_sipesc_fems_bltdataprocess_hdr_files

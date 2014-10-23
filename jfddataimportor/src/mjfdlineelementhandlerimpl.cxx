@@ -199,6 +199,8 @@ bool MJfdLineElementHandlerImpl::handleEntry(QTextStream* stream,
 		 *  |4~7|     :本组单元总数
 		 *  |56~59|:本组材料类型标志
 		 *  |60~63|:本组材料类型总数
+		 *
+		 *TODO 不同单元的“材料类型标志”不同，因此在此处理，不太恰当。
 		 */
 		QString line = _data->_readLine();
 
@@ -213,6 +215,8 @@ bool MJfdLineElementHandlerImpl::handleEntry(QTextStream* stream,
 			matType == "SolidOrthotropy";
 
 		int nMat = line.mid(60, 4).toInt(); // |60~63|:本组材料类型总数
+		if(nMat==0)
+			nMat=1;
 
 		int eleGroupId = 0;//单元组号
 		QString str = line.mid(80);

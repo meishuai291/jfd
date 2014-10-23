@@ -487,6 +487,7 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 		MJfdEntryHandler handler = factory.createExtension();
 		Q_ASSERT(!handler.isNull());
 		handler.initialize(_data->_model);
+		// 根据总控卡，确定单元组个数
 		handler.handleEntry(&_data->_stream, &_data->_logStream,
 				_data->_blockNum[LINEELEMENT]);
 	}
@@ -498,6 +499,7 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 		MJfdEntryHandler handler = factory.createExtension();
 		Q_ASSERT(!handler.isNull());
 		handler.initialize(_data->_model);
+		// 根据总控卡，确定单元组个数
 		handler.handleEntry(&_data->_stream, &_data->_logStream,
 				_data->_blockNum[NLINEELEMENT]);
 	}
@@ -524,6 +526,7 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 				_data->_blockNum[GRAV]);
 	}
 
+//-- 处理数据 ---------------------------------------------------------------------
 	_data->_handleLoadCase();
 
 	MDataManager mpc = _data->_baseManager.createDataManager();

@@ -104,14 +104,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>export  *.out data file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>exporting node data to *.out file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>the factory for MJfdForceHandler.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -137,6 +129,14 @@
     </message>
     <message>
         <source>export *.out file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>å¤ç*.jfdæä»¶ä¸­çshellæ°æ®</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the factory for MJfdShellElementHandler.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
