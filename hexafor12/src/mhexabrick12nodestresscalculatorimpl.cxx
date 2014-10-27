@@ -74,9 +74,9 @@ class MHexaBrick12NodeStressCalculatorImpl::Data
       cait.append(0);
       cait.append(-qSqrt(15) / 5);
 
-      for (int i = 0; i < 2; i++)
-        for (int j = 0; j < 2; j++)
-          for (int k = 0; k < 3; k++){
+      for (int k = 0; k < 3; k++)
+            for (int j = 0; j < 2; j++)
+                   for (int i = 0; i < 2; i++){
             interpolation(m, 0, (1 - ksi.value(i)) * (1 - eit.value(j)) * (1 - cait.value(k)) * (-cait.value(k)) / 8);
             interpolation(m, 1, (1 + ksi.value(i)) * (1 - eit.value(j)) * (1 - cait.value(k)) * (-cait.value(k)) / 8);
             interpolation(m, 2, (1 + ksi.value(i)) * (1 + eit.value(j)) * (1 - cait.value(k)) * (-cait.value(k)) / 8);
@@ -162,7 +162,7 @@ MDataObject MHexaBrick12NodeStressCalculatorImpl::getNodeStress(
   sigma10 << sigmaData10;
   MVectorData sigmaData11 = integralPoints.getDataAt(10);
   MVector sigma11 = _data->_vFactory.createVector(6);
-  sigma1 << sigmaData11;
+  sigma11 << sigmaData11;
   MVectorData sigmaData12 = integralPoints.getDataAt(11);
   MVector sigma12 = _data->_vFactory.createVector(6);
   sigma12 << sigmaData12;
@@ -200,7 +200,7 @@ MDataObject MHexaBrick12NodeStressCalculatorImpl::getNodeStress(
     integralVector(11, sigma12(i));
 
     tmp1 = _data->_extrapolationMatrix * integralVector; //tmp1为转化12个节点应力值的第i个分量
-    NSigma1(i, tmp1(0)); //把tmp1中的8个节点应力值的第i个分量分别分给八个节点应力向量
+    NSigma1(i, tmp1(0)); //把tmp1中的12个节点应力值的第i个分量分别分给12个节点应力向量
     NSigma2(i, tmp1(1));
     NSigma3(i, tmp1(2));
     NSigma4(i, tmp1(3));

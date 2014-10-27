@@ -660,22 +660,11 @@ bool MBltResultHeaderExportorImpl::Data::SolidEleStress(QTextStream* stream, MPr
 			QString ss;
 			MVector stress1V = _vFactory.createVector();
 
-			for (int n = 0; n < 4; n++) {
+			for (int n = 0; n < 8; n++) {
 				MVectorData stress1 = eleStressData1.getDataAt(n);
 				stress1V << stress1;
 
 				ss = ss + BltForamt::blank(n + 1, 17) + QString("          ");
-				for (int vi = 0; vi < stress1V.getCount(); vi++) {
-					ss = ss + BltForamt::sciNot(stress1V(vi), 6, 13) + " ";
-				}
-				ss += "\n";
-			}
-			// TODO 应力点位置？？
-			for (int n = 4; n < 8; n++) {
-				MVectorData stress1 = eleStressData1.getDataAt(n);
-				stress1V << stress1;
-
-				ss = ss + BltForamt::blank(n + 1, 17) + "          ";
 				for (int vi = 0; vi < stress1V.getCount(); vi++) {
 					ss = ss + BltForamt::sciNot(stress1V(vi), 6, 13) + " ";
 				}
