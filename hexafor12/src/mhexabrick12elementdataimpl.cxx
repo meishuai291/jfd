@@ -25,9 +25,6 @@ MHexaBrick12ElementDataImpl::~MHexaBrick12ElementDataImpl()
 
 QString  MHexaBrick12ElementDataImpl::getType()  const
   {
-  // MObjectManager manager = MObjectManager::getManager();
-  //MElementsGlobal global = manager.getObject(
-  // "org.sipesc.fems.global.elementsglobal");
   QString mDataType = "HexaBrick12Element";
   return mDataType;
   }

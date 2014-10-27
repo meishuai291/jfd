@@ -87,7 +87,7 @@ bool MHexaBrick12LumpedMassMatrixImpl::initialize(MDataModel& model,
     return false;
     }
 
-  MMatrix mdn = mFactory.createMatrix(36,1 );
+  MMatrix mdn = mFactory.createMatrix(36, 1 );
   for (int i = 0; i < 36; i++)
     mdn(i, 0, 1.0 / 12.0);
 

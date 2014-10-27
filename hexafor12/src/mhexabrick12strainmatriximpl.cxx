@@ -96,33 +96,9 @@ MMatrix MHexaBrick12StrainMatrixImpl::getStrainMatrix(
 
   MMatrix shpFuncDerivative = _data->_mFactory.createMatrix(3, 12);
   shpFuncDerivative = _data->_shpFunction.getShpFuncDerivative(
-      integ.getIntegCoord()); //形函数导数矩阵（在积分点的值）
-//  qDebug() <<integ.getIntegCoord().value(0)<<integ.getIntegCoord().value(1)<<integ.getIntegCoord().value(2)<<"integinteginteginteginteginteginteginteginteg";
+  integ.getIntegCoord()); //形函数导数矩阵（在积分点的值）
   MMatrix jacobiMatrix = _data->_mFactory.createMatrix(3, 3);
   jacobiMatrix = shpFuncDerivative * _data->_nodeCoord;
-//	int Row3 =_data->_nodeCoord.getRowCount();
-//	int Col3 = _data->_nodeCoord.getColCount();
-//
-//	qDebug() << Row3;
-//	qDebug() << Col3;
-//
-//	for (int i = 0; i < Row3; i++)
-//		for (int j = 0; j < Col3; j++) {
-//			qDebug() <<_data->_nodeCoord(i, j)
-//					<< "----------------------nodeCoordnodeCoordnodeCoordnodeCoord";
-//		}
-//
-//	int Row =jacobiMatrix.getRowCount();
-//	int Col =jacobiMatrix.getColCount();
-//
-//	qDebug() << Row;
-//	qDebug() << Col;
-//
-//	for (int i = 0; i < Row; i++)
-//		for (int j = 0; j < Col; j++) {
-//			qDebug() << jacobiMatrix(i, j)
-//					<< "----------------------jacobiMatrixjacobiMatrixjacobiMatrixjacobiMatrixjacobiMatrix";
-//		}
 
 	MExtensionManager extManager = MExtensionManager::getManager();
 	_data->_mTools = extManager.createExtension(
@@ -130,22 +106,8 @@ MMatrix MHexaBrick12StrainMatrixImpl::getStrainMatrix(
    Q_ASSERT(!_data->_mTools.isNull());
   _data->_jacobiValue = _data->_mTools.determinate(jacobiMatrix); // 计算雅克比矩阵行列式值
 
-//  qDebug()<<_data->_jacobiValue<<"jacobiValuejacobiValuejacobiValuejacobiValuejacobiValue";
   MMatrix invJacobiMatrix = _data->_mFactory.createMatrix(3, 3);
   invJacobiMatrix = _data->_mTools.inverse(jacobiMatrix); //雅克比矩阵的逆
-
-
-//	int Row =invJacobiMatrix.getRowCount();
-//  	int Col = invJacobiMatrix.getColCount();
-//
-//  	qDebug() << Row;
-//  	qDebug() << Col;
-//
-//  	for (int i = 0; i < Row; i++)
-//  		for (int j = 0; j < Col; j++) {
-//  			qDebug() <<invJacobiMatrix(i, j)
-//  					<< "----------------------invJacobiMatrixinvJacobiMatrixinvJacobiMatrixinvJacobiMatrix";
-//  		}
 
   MMatrix B = _data->_mFactory.createMatrix(6, 36);
   MMatrix DeriLocal = _data->_mFactory.createMatrix(3, 1);
@@ -178,17 +140,7 @@ MMatrix MHexaBrick12StrainMatrixImpl::getStrainMatrix(
     B(5, i * 3 + 1, 0.0);
     B(5, i * 3 + 2, DeriGlobal(0, 0));
     }
-//	int Row2 =B.getRowCount();
-//    	int Col2 = B.getColCount();
-//
-//    	qDebug() << Row2;
-//    	qDebug() << Col2;
-//
-//    	for (int i = 0; i < Row2; i++)
-//    		for (int j = 0; j < Col2; j++) {
-//    			qDebug() << B(i, j)
-//    					<< "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
-//    		}
+
   return B;
   }
 

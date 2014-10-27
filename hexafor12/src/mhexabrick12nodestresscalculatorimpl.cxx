@@ -60,38 +60,35 @@ class MHexaBrick12NodeStressCalculatorImpl::Data
           "org.sipesc.fems.matrix.MMatrixTools");
       Q_ASSERT(!_mTools.isNull());
 
-      MMatrix interpolation = _mFactory.createMatrix(12, 12); //应力插值矩阵与应力外推时的转换阵 [ N ]12 * 12乘以[sigmaGauss]12 * 1  see details  at Page175
+      MMatrix interpolation = _mFactory.createMatrix(12, 12); //应力插值矩阵与应力外推时的转换阵 [ N ]12 * 12乘以[sigmaGauss]12 * 1
 
       int m = 0;
       QList<double> ksi, eit, cait;
-      ksi.append(qSqrt(15) / 5);
-      ksi.append(0.0);
-      ksi.append(-qSqrt(15) / 5);
+      ksi.append(qSqrt(3) / 3);
+      ksi.append(-qSqrt(3) / 3);
 
-      eit.append(qSqrt(15) / 5);
-      eit.append(-qSqrt(15) / 5);
+      eit.append(qSqrt(3) / 3);
+      eit.append(-qSqrt(3) / 3);
 
       cait.append(qSqrt(15) / 5);
+      cait.append(0);
       cait.append(-qSqrt(15) / 5);
 
-      for (int k = 0; k < 2; k++)
+      for (int i = 0; i < 2; i++)
         for (int j = 0; j < 2; j++)
-          for (int i = 0; i < 3; i++){
-            interpolation(m, 0, (1 - ksi.value(i)) * (1 + eit.value(j)) * (1 - cait.value(k)) * (2 + ksi.value(i)) / 8);
-            interpolation(m, 1, (1 - ksi.value(i)) * (1 - eit.value(j)) * (1 - cait.value(k)) * (2 + ksi.value(i)) / 8);
-            interpolation(m, 2, (1 - ksi.value(i)) * (1 - eit.value(j)) * (1 + cait.value(k)) * (2 + ksi.value(i)) / 8);
-            interpolation(m, 3, (1 - ksi.value(i)) * (1 + eit.value(j)) * (1 + cait.value(k)) * (2 + ksi.value(i)) / 8);
-
-            interpolation(m, 4, (1 + ksi.value(i)) * (1 + eit.value(j)) * (1 - cait.value(k)) * (2 - ksi.value(i)) / 8);
-            interpolation(m, 5, (1 + ksi.value(i)) * (1 - eit.value(j)) * (1 - cait.value(k)) * (2 - ksi.value(i)) / 8);
-            interpolation(m, 6, (1 + ksi.value(i)) * (1 - eit.value(j)) * (1 + cait.value(k)) * (2 - ksi.value(i)) / 8);
-            interpolation(m, 7, (1 + ksi.value(i)) * (1 + eit.value(j)) * (1 + cait.value(k)) * (2 - ksi.value(i)) / 8);
-
-            interpolation(m, 8, (1 - qPow(ksi.value(i), 2)) * (1 + eit.value(j)) * (1 - cait.value(k)) / 4);
-            interpolation(m, 9, (1 - qPow(ksi.value(i), 2)) * (1 - eit.value(j)) * (1 - cait.value(k)) / 4);
-            interpolation(m, 10, (1 - qPow(ksi.value(i), 2)) * (1 - eit.value(j)) * (1 + cait.value(k)) / 4);
-            interpolation(m, 11, (1 - qPow(ksi.value(i), 2)) * (1 + eit.value(j)) * (1 + cait.value(k)) / 4);
-
+          for (int k = 0; k < 3; k++){
+            interpolation(m, 0, (1 - ksi.value(i)) * (1 - eit.value(j)) * (1 - cait.value(k)) * (-cait.value(k)) / 8);
+            interpolation(m, 1, (1 + ksi.value(i)) * (1 - eit.value(j)) * (1 - cait.value(k)) * (-cait.value(k)) / 8);
+            interpolation(m, 2, (1 + ksi.value(i)) * (1 + eit.value(j)) * (1 - cait.value(k)) * (-cait.value(k)) / 8);
+            interpolation(m, 3, (1 - ksi.value(i)) * (1 + eit.value(j)) * (1 - cait.value(k)) * (-cait.value(k)) / 8);
+            interpolation(m, 4, (1 - ksi.value(i)) * (1 - eit.value(j)) * (1 + cait.value(k)) * (cait.value(k)) / 8);
+            interpolation(m, 5, (1 + ksi.value(i)) * (1 - eit.value(j)) * (1 + cait.value(k)) * (cait.value(k)) / 8);
+            interpolation(m, 6, (1 + ksi.value(i)) * (1 + eit.value(j)) * (1 + cait.value(k)) * (cait.value(k)) / 8);
+            interpolation(m, 7, (1 - ksi.value(i)) * (1 + eit.value(j)) * (1 + cait.value(k)) * (cait.value(k)) / 8);
+            interpolation(m, 8, (1 - ksi.value(i)) * (1 - eit.value(j)) * (1 - qPow(cait.value(k), 2)) / 4);
+            interpolation(m, 9, (1 + ksi.value(i)) * (1 - eit.value(j)) * (1 - qPow(cait.value(k), 2)) / 4);
+            interpolation(m, 10, (1 + ksi.value(i)) * (1 + eit.value(j)) * (1 - qPow(cait.value(k), 2)) / 4);
+            interpolation(m, 11, (1 - ksi.value(i)) * (1 + eit.value(j)) * (1 - qPow(cait.value(k), 2)) / 4);
 
             m++;}
 
@@ -222,25 +219,6 @@ MDataObject MHexaBrick12NodeStressCalculatorImpl::getNodeStress(
   nodePoints << NSigma1 << NSigma2 << NSigma3 << NSigma4 << NSigma5 << NSigma6
       << NSigma7 << NSigma8 << NSigma9  << NSigma10  << NSigma11  << NSigma12;
 
-//  sigma1 >> sigmaData1;
-//  sigma2 >> sigmaData2;
-//  sigma3 >> sigmaData3;
-//  sigma4 >> sigmaData4;
-//  sigma5 >> sigmaData5;
-//  sigma6 >> sigmaData6;
-//  sigma7 >> sigmaData7;
-//  sigma8 >> sigmaData8;
-//
-//  MDataObjectList nodePoints = _data->_listFactory.createObject();
-//  nodePoints.appendData(sigmaData1); //nodePoints是坐标变换前的节点应力数组
-//  nodePoints.appendData(sigmaData2); //而nodeStressVectors是坐标转换后的
-//  nodePoints.appendData(sigmaData3); //总体坐标系下的节点应力数组
-//  nodePoints.appendData(sigmaData4);
-//  nodePoints.appendData(sigmaData5);
-//  nodePoints.appendData(sigmaData6);
-//  nodePoints.appendData(sigmaData7);
-//  nodePoints.appendData(sigmaData8);
-
   MMatrixData mData = _data->_coordData.getTransMatrixData();
   MMatrix m = _data->_mFactory.createMatrix();
   m << mData;
@@ -290,9 +268,6 @@ MDataObject MHexaBrick12NodeStressCalculatorImpl::getNodeStress(
   nodeStressVectors.setId(eleId);
   for (int i = 0; i < 12; i++)
     {
-//    MVectorData tmpData = nodePoints.getData(i);
-//    MVector tmp = _data->_vFactory.createVector();
-//    tmp << tmpData;
     MVector tmp = nodePoints[i];
     MVector nodeVector = _data->_mTools.transpose(trans) * tmp;
     MVectorData nodeVectorData;

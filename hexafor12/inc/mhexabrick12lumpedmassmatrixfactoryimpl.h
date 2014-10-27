@@ -60,7 +60,6 @@ class MHexaBrick12LumpedMassMatrixFactoryImpl : public MHexaBrick12LumpedMassMat
     MExtension createExtension(const QVariant& key) const
       {
       MHexaBrick12LumpedMassMatrixImpl* p = new MHexaBrick12LumpedMassMatrixImpl;
-      qDebug()<<"aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbb";
       return MHexaBrick12LumpedMassMatrix(p);
 
       }
