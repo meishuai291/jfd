@@ -266,7 +266,7 @@ public:
 			 *   自重载荷-0，工况一载荷-1，...
 			 * 然后，每个loadcase考虑前面工况所有载荷
 			 */
-
+#if 1	// 叠加自重，卸载前一工况
 			int loadCount = _loadPath.getTypeCount(MDatabaseGlobal::ManagerType);
 			loadCount--;	// 删除自重
 			for (int j = 0; j < loadCount;j++){
@@ -285,6 +285,26 @@ public:
 				}
 				_loadcase.appendData(LoadCaseData);
 			}
+#else	// 各个工况独立，不叠加自重，每个时间步分别加载
+			int caseId = 2;
+			int loadCount = _loadPath.getTypeCount(MDatabaseGlobal::ManagerType);
+			for (int j = 0; j < loadCount; j++){
+				QString name = _loadPath.getTypeName(MDatabaseGlobal::ManagerType, j);
+				int Id = name.toInt();
+				if (Id == 0)
+					continue;
+
+				MLoadCaseData LoadCaseData = factory.createObject();
+				LoadCaseData.setId(caseId);
+				LoadCaseData.setLoadCount(1);
+				LoadCaseData.setLoadId(0, Id);
+				LoadCaseData.setScale(0, 1.0);
+				_loadcase.appendData(LoadCaseData);
+
+				caseId++;
+			}
+#endif
+
 		}
 	}
 
