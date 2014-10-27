@@ -275,7 +275,7 @@ bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) 
 
 		if(type == "HexaBrickElement"){
 			SolidElementInfoOutput(stream, gId);
-		}else if(type == "Hexa12BrickElement"){
+		}else if(type == "HexaBrick12Element"){
 			SolidElementInfoOutput(stream, gId);
 		}else if(type == "BarElement"){
 			RodElementInfoOutput(stream, gId);
@@ -302,13 +302,9 @@ bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* str
 	solidHeader += "                                                                  POINT                          X           Y           Z \n";
 	QString solidEH ="   12   12    1    0    1    0    1  0.0000E+00  0.0000E+00      0";
 
-
 	MPropertyData eleGroup = _EleGroupManager.getData(id);
 	QString type = eleGroup.getType();
 	int Elecount = eleGroup.getValueCount();
-	if(type == "HexaBrickElement"){
-		Elecount /= 2;
-	}
 
 	MDataManager EleManager = _dbManager.createDataManager();
 	bool isOk = EleManager.open(_elementPath, type);
@@ -327,45 +323,78 @@ bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* str
 	str.append(eleHeader);
 	str.append(solidHeader);
 
-	for (int j = 0; j < Elecount; j++) {
-		QString sEid = blank(j + 1, 5);
+	//-- 输出 ------------------------------------------------------------------------------------
+	if(type == "HexaBrickElement"){
+		Elecount /= 2;
+		for (int j = 0; j < Elecount; j++) {
+			QString sEid = blank(j + 1, 5);
 
-		MElementData eleData1 = EleManager.getData(
-				eleGroup.getValue(2 * j).toInt());
-		MElementData eleData2 = EleManager.getData(
-				eleGroup.getValue(2 * j + 1).toInt());
+			MElementData eleData1 = EleManager.getData(
+					eleGroup.getValue(2 * j).toInt());
+			MElementData eleData2 = EleManager.getData(
+					eleGroup.getValue(2 * j + 1).toInt());
 
-		QString SnodeId = " ";
-		int gnc = eleData1.getNodeCount();
-		for (int ttt = 0; ttt < 4; ttt++) {
-			int nodeId = eleData1.getNodeId(ttt);
-			SnodeId = SnodeId + blank(nodeId, 6) + QString(" ");
+			QString SnodeId = " ";
+			int gnc = eleData1.getNodeCount();
+			for (int ttt = 0; ttt < 4; ttt++) {
+				int nodeId = eleData1.getNodeId(ttt);
+				SnodeId = SnodeId + blank(nodeId, 6) + QString(" ");
+			}
+			for (int t = 4; t < 8; t++) {
+				int nodeId = eleData2.getNodeId(t);
+				SnodeId = SnodeId + blank(nodeId, 6) + " ";
+			}
+			SnodeId =
+					SnodeId + "\n"
+							+ "                                                                             0      0      0      0      0      0      0      0\n";
+			SnodeId =
+					SnodeId
+							+ "                                                                        ";
+
+			for (int t = 0; t < 4; t++) {
+				int nodeId = eleData2.getNodeId(t);
+				SnodeId = SnodeId + blank(nodeId, 6) + " ";
+			}
+
+			SnodeId = SnodeId + "     0      0      0      0\n";
+			SnodeId =
+					SnodeId
+							+ "                                                                             0      0      0\n\n";
+
+			str.append(sEid + solidEH + SnodeId);   //存入一个单元块信息
 		}
-		for (int t = 4; t < 8; t++) {
-			int nodeId = eleData2.getNodeId(t);
-			SnodeId = SnodeId + blank(nodeId, 6) + " ";
+		(*stream) << str;
+
+	}else{
+
+		for (int j = 0; j < Elecount; j++) {
+			QString sEid = blank(j + 1, 5);
+
+			MElementData eleData1 = EleManager.getData(
+					eleGroup.getValue(j).toInt());
+			QString SnodeId = " ";
+			for (int ttt = 0; ttt < 8; ttt++) {
+				int nodeId = eleData1.getNodeId(ttt);
+				SnodeId += blank(nodeId, 6) + QString(" ");
+			}
+			SnodeId += "\n";
+			SnodeId += "                                                                             0      0      0      0      0      0      0      0 \n";
+			SnodeId += "                                                                       ";
+
+			QString SnodeId2 = " ";
+			for (int t = 8; t < 12; t++) {
+				int nodeId = eleData1.getNodeId(t);
+				SnodeId2 += blank(nodeId, 6) + " ";
+			}
+			SnodeId2 += "     0      0      0      0 \n";
+			SnodeId2 += "                                                                             0      0      0 \n";
+			SnodeId2 += "\n";
+			str.append(sEid + solidEH + SnodeId + SnodeId2);   //存入一个单元块信息
 		}
-		SnodeId =
-				SnodeId + "\n"
-						+ "                                                                             0      0      0      0      0      0      0      0\n";
-		SnodeId =
-				SnodeId
-						+ "                                                                        ";
 
-		for (int t = 0; t < 4; t++) {
-			int nodeId = eleData2.getNodeId(t);
-			SnodeId = SnodeId + blank(nodeId, 6) + " ";
-		}
-
-		SnodeId = SnodeId + "     0      0      0      0\n";
-		SnodeId =
-				SnodeId
-						+ "                                                                             0      0      0\n\n";
-
-		str.append(sEid + solidEH + SnodeId);   //存入一个单元块信息
+		(*stream) << str;
 	}
 
-	(*stream) << str;
 	return true;
 }
 bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* stream,int id){
@@ -374,9 +403,9 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 	QString rodHeader = "    N IELD  IPS  ISV  MTYP   KG    INITIAL       GAP        LENGTH        ETIME       ETIME2     INTLOC   NODE1  NODE2  NODE3  NODE4 \n";
 	rodHeader += "                                   STRAIN       WIDTH                                 INTEGRATION       GLOBAL  COORDINATES \n";
 	rodHeader += "                                                                                         POINT      X            Y            Z \n";
-	rodHeader += "                                                                  POINT                          X           Y           Z \n";
+	rodHeader += "\n\n\n";
 	QString rodEH ="    2    1    0     1    1   0.0000E+00   0.0000E+00 ";
-	QString rodEH2 ="   0.0000E+00   0.0000E+00       0";
+	QString rodEH2 ="   0.0000E+00   0.0000E+00       0 ";
 
 	MPropertyData eleGroup = _EleGroupManager.getData(id);
 	QString type = eleGroup.getType();
@@ -420,9 +449,52 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 	return true;
 }
 bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* stream,int id){
-	QString shellEH;
 
+	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
+	QString shellHeader = "    N IPS ISV MTYP   KG     BET       THIC       ETIME     ETIME2   NODE1 NODE2 NODE3 INTLOC INTEG.       GLOBAL  COORDINATES \n";
+	shellHeader += "                                                                                             POINT      X          Y          Z \n";
+	shellHeader += "\n\n\n";
+	QString shellEH ="   1   0    1    1  0.000E+00 ";
+	QString shellEH2 ="  0.000E+00  0.000E+00";
 
+	MPropertyData eleGroup = _EleGroupManager.getData(id);
+	QString type = eleGroup.getType();
+	int Elecount = eleGroup.getValueCount();
+
+	MDataManager EleManager = _dbManager.createDataManager();
+	bool isOk = EleManager.open(_elementPath, type);
+	if(!isOk){
+		QString errorMessage = QString("can't open %1 DataManager "
+				"in MBltResultHeaderExportorImpl::Data::RodElementInfoOutput() ").arg(eleGroup.getType());
+		mReportError(M_ERROR_FATAL, errorMessage);
+		_monitor.setMessage(errorMessage);
+		return false;
+	}
+
+	QString str;
+	QString groupId = blank(id, 5);     ///=号后9位，gid在前5位
+	str.append("E L E M E N T   G R O U P ........................... =" + groupId + "    ( LINEAR )\n\n\n\n");
+//	str.append(eleMseg(Elecount, id));
+	str.append(eleHeader);
+	str.append(shellHeader);
+
+	for (int j = 0; j < Elecount; j++) {
+		QString sEid = blank(j + 1, 5);
+		QString thick = kexue(0,4,10);
+
+		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
+
+		QString SnodeId;
+		int gnc = eleData1.getNodeCount();
+		for (int ttt = 0; ttt < gnc; ttt++) {
+			int nodeId = eleData1.getNodeId(ttt);
+			SnodeId += blank(nodeId, 6);
+		}
+		str.append(sEid + shellEH + thick + shellEH2 + SnodeId);   //存入一个单元块信息
+		str += "\n\n";
+	}
+
+	(*stream) << str;
 	return true;
 }
 
@@ -490,8 +562,8 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 
 		str.append("\n");
 		(*stream) << str;
-
-
+// TODO
+#if 0
 		//****************************单元应力*********************************//
 		QString str1;
 		QString stressMseg1 =
@@ -516,8 +588,10 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 
 			MPropertyData eleGroup = _EleGroupManager.getData(i);
 			int gId = eleGroup.getId();
+			QString type = eleGroup.getType();
+			/**TODO 应力输出与单元类型有关 **/
 			QString groupId = blank(gId, 5);     ///=号后9位，gid在前5位
-			bool ok = EleStressManager.open(EleStressModel,eleGroup.getType());
+			bool ok = EleStressManager.open(EleStressModel,type);
 
 			str1.append(stressMseg1 + groupId + "   (3/D CONTINUUM)\n\n");
 			str1.append(stressMseg2);
@@ -560,6 +634,7 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 		}
 
 		(*stream) << str1;
+#endif
 	}
 
 	return true;

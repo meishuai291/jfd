@@ -43,6 +43,7 @@ using namespace std;
 #include <org.sipesc.fems.data.mloadcasedata.h>
 #include <org.sipesc.fems.data.mloadcomponent.h>
 #include <org.sipesc.fems.data.mnodeloaddata.h>
+#include <org.sipesc.fems.data.melementdata.h>
 using namespace org::sipesc::fems::data;
 #include <org.sipesc.fems.matrix.mnodecontrolmatrix.h>
 #include <org.sipesc.fems.matrix.mnodecontrolmatrixdata.h>
@@ -85,6 +86,7 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 //  apList = pluginManager.getAvailablePluginList();
 	apList << "org.sipesc.fems.addplugin";
 	apList << "org.sipesc.fems.bltdataprocess";
+	apList << "org.sipesc.fems.hexabrickelement12";
 	for (int i = 0; i < apList.count(); i++){
 		ok = pluginManager.loadPlugin(apList[i]);
 		std::cout << ok << " - " << i+1 << " - " << apList[i].toStdString() << std::endl;
@@ -126,64 +128,6 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 	Q_ASSERT(ok);
 	ok = localCoords.clear();
 	Q_ASSERT(ok);
-
-#if	0	// 测试区
-		/**
-		 * 载荷测试
-		 */
-		MDataManager loadcase = dbManager.createDataManager();
-		ok = loadcase.open( _model, "LoadCase");
-		qDebug() << loadcase.getDataCount();
-		MLoadCaseData LoadCaseData = loadcase.getDataAt(0);
-
-		MDataManager LoadComponent = dbManager.createDataManager();
-		ok = LoadComponent.open( _model, "LoadComponent");
-		qDebug() << LoadComponent.getDataCount();
-		MLoadComponent lc = LoadComponent.getDataAt(0);
-		qDebug() << lc.getId();
-		int cc = lc.getComponentCount();
-		for (int j = 0; j <cc;j++){
-			qDebug() << lc.getDofNumber(j) << lc.getValue(j);
-		}
-
-		MDataModel loadPath = dbManager.createDataModel();
-		ok = loadPath.open( _model, "LoadPath",true);
-		Q_ASSERT(ok);
-		MDataManager Load = dbManager.createDataManager();
-		ok = Load.open( loadPath, "1",true);
-		int lcount = Load.getDataCount();
-		for (int j = 0; j <lcount;j++){
-			MNodeLoadData d = Load.getDataAt(j);
-			qDebug() << d.getNodeId();
-			qDebug() << d.getLoadValue(0);
-			qDebug() << d.getLoadValue(1);
-			qDebug() << d.getLoadValue(2);
-			qDebug() << d.getLoadValue(3);
-			qDebug() << d.getLoadValue(4);
-			qDebug() << d.getLoadValue(5);
-		}
-
-
-
-//		MDataManager _nodeControl = dbManager.createDataManager();
-//		bool isOK = _nodeControl.open(_model, "NodeControlMatrix",true);
-//		Q_ASSERT(isOK);
-//
-//
-//		MNodeControlMatrixFactory _nodeCFactory = _objectManager.getObject(
-//					"org.sipesc.fems.data.nodecontrolmatrixfactory");
-//		Q_ASSERT(!_nodeCFactory.isNull());
-//
-//
-//    	MNodeControlMatrixData cData = _nodeControl.getData(1233);
-//    	Q_ASSERT(!cData.isNull());
-//        MNodeControlMatrix controlMatrix = _nodeCFactory.createMatrix();
-//    	Q_ASSERT(!controlMatrix.isNull());
-//    	controlMatrix << cData;
-//
-//    	int index = controlMatrix.getControlDofNumber(2);
-//    	qDebug() << index;
-#endif
 
 	return;
 }
@@ -267,7 +211,7 @@ void Test::import(const QString& importName)
 	MAnalysisFlowCommands analysisCommands = analysisFactory.createExtension();
 	_taskCommands = analysisCommands.getFlowCommands();
 	QVector<QString>::iterator vi = _taskCommands.end();
-//	_taskCommands.erase(vi-1);
+	_taskCommands.erase(vi-1);
 
 	return;
 }
@@ -330,4 +274,82 @@ void Test::output(const QString& fileName){
 	Q_ASSERT(ok);
 	std::cout << "Time Elapsed==>" << time.elapsed() / 1000.0
 			<< " seconds\n";
+}
+void Test::checkout(){
+	MDatabaseManager dbManager = _objectManager.getObject(
+			"org.sipesc.core.engdbs.mdatabasemanager");
+	Q_ASSERT(!dbManager.isNull());
+
+#if	0	// 测试区
+		/**
+		 * 载荷测试
+		 */
+		MDataManager loadcase = dbManager.createDataManager();
+		ok = loadcase.open( _model, "LoadCase");
+		qDebug() << loadcase.getDataCount();
+		MLoadCaseData LoadCaseData = loadcase.getDataAt(0);
+
+		MDataManager LoadComponent = dbManager.createDataManager();
+		ok = LoadComponent.open( _model, "LoadComponent");
+		qDebug() << LoadComponent.getDataCount();
+		MLoadComponent lc = LoadComponent.getDataAt(0);
+		qDebug() << lc.getId();
+		int cc = lc.getComponentCount();
+		for (int j = 0; j <cc;j++){
+			qDebug() << lc.getDofNumber(j) << lc.getValue(j);
+		}
+
+		MDataModel loadPath = dbManager.createDataModel();
+		ok = loadPath.open( _model, "LoadPath",true);
+		Q_ASSERT(ok);
+		MDataManager Load = dbManager.createDataManager();
+		ok = Load.open( loadPath, "1",true);
+		int lcount = Load.getDataCount();
+		for (int j = 0; j <lcount;j++){
+			MNodeLoadData d = Load.getDataAt(j);
+			qDebug() << d.getNodeId();
+			qDebug() << d.getLoadValue(0);
+			qDebug() << d.getLoadValue(1);
+			qDebug() << d.getLoadValue(2);
+			qDebug() << d.getLoadValue(3);
+			qDebug() << d.getLoadValue(4);
+			qDebug() << d.getLoadValue(5);
+		}
+
+
+
+//		MDataManager _nodeControl = dbManager.createDataManager();
+//		bool isOK = _nodeControl.open(_model, "NodeControlMatrix",true);
+//		Q_ASSERT(isOK);
+//
+//
+//		MNodeControlMatrixFactory _nodeCFactory = _objectManager.getObject(
+//					"org.sipesc.fems.data.nodecontrolmatrixfactory");
+//		Q_ASSERT(!_nodeCFactory.isNull());
+//
+//
+//    	MNodeControlMatrixData cData = _nodeControl.getData(1233);
+//    	Q_ASSERT(!cData.isNull());
+//        MNodeControlMatrix controlMatrix = _nodeCFactory.createMatrix();
+//    	Q_ASSERT(!controlMatrix.isNull());
+//    	controlMatrix << cData;
+//
+//    	int index = controlMatrix.getControlDofNumber(2);
+//    	qDebug() << index;
+#endif
+#if	1
+	MDataModel ee = dbManager.createDataModel();
+	bool ok = ee.open(_model, "ElementPath");
+	MDataManager bb = dbManager.createDataManager();
+	ok = bb.open( ee, "QuadDKQShElement");
+	qDebug() << bb.getDataCount();
+	MElementData eleData = bb.getDataAt(3);
+	qDebug() << eleData.getId();
+	qDebug() << eleData.getNodeCount();
+	qDebug() << eleData.getNodeId(0);
+	qDebug() << eleData.getNodeId(1);
+	qDebug() << eleData.getNodeId(2);
+	qDebug() << eleData.getNodeId(3);
+
+#endif
 }

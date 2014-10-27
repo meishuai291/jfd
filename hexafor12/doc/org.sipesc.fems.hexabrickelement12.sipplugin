@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin spec="2.0" name="org.sipesc.fems.hexabrickelement12" version="2.0.0" label="org.sipesc.fems.hexabrickelement12" author="SiPESC Software Group" copyright="Designed and implemented by SiPESC Software Group.">
+  <feature name="org.sipesc.fems.hexaelement12" version="2.0.0">
+    <extension name="MHexaBrick12StrainMatrix" uuid="{dd5c7f98-7b59-4387-b5f0-4809f08185eb}" creatable="true" scriptable="true" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.element.MElementStrainMatrix"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleConstiDParser" uuid="{6b69f973-6e9f-4746-9f30-3e3f43992ab8}" creatable="true" scriptable="true" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.element.MEleConstiDParser"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12ShpFunction" uuid="{43368d9b-935e-4569-91b2-f70d73e27502}" creatable="true" scriptable="true" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.element.MShpFunction"/>
+      </bases>
+    </extension>
+    <extension name="MGau3D12IntegForm" uuid="{68f94c4a-3410-45d7-bbc2-c43c4a51ca1a}" creatable="true" scriptable="true" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.element.MIntegForm"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12NodeStressCalculator" uuid="{87db0b3b-88a6-4e4d-9fa8-7b7cf6e4074c}" creatable="true" scriptable="true" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.stress.MElementNodeStressCalculator"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12LumpedMassMatrix" uuid="{dd474ade-ac6d-4993-a17c-60634b66be1e}" creatable="true" scriptable="true" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.mass.MElementMassMatrix"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleVolume" uuid="{dd56af77-7f1d-4c20-8e70-e9262e2d01f0}" creatable="true" scriptable="true" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.mass.MElementVolume"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleStiffCalculatorFactory" uuid="{74972d7b-39f2-421c-9e89-32e1e107f764}" creatable="true" scriptable="true" category="fems.factory.elementstiffcalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleStrainCalculatorFactory" uuid="{72393452-b139-4588-a655-b48d6c3819bf}" creatable="true" scriptable="true" category="fems.factory.elementstraincalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleStressCalculatorFactory" uuid="{65be5408-87f5-4a7c-ae65-94045b3c0f52}" creatable="true" scriptable="true" category="fems.factory.elementstresscalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleMassCalculatorFactory" uuid="{7771661f-eab6-41cc-ba20-ad6bd1cbe1e7}" creatable="true" scriptable="true" category="fems.factory.elementmasscalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12StrainMatrixFactory" uuid="{77776846-33b6-4b9b-8078-cd41ca44ba24}" creatable="true" scriptable="true" category="fems.factory.strainmatrix">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleConstiDParserFactory" uuid="{efb29d8d-8085-45f0-8a02-a2659ae95a36}" creatable="true" scriptable="true" category="fems.factory.brickeleconstidparser">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12ShpFunctionFactory" uuid="{0a0aa685-9f61-42cf-aacb-7ba95185203d}" creatable="true" scriptable="true" category="fems.factory.shapefunction">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MGau3D12IntegFormFactory" uuid="{3307d6bb-8d49-4a62-a38b-77939a03a97e}" creatable="true" scriptable="true" category="fems.factory.integrationform">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12NodeStressCalculatorFactory" uuid="{c22828c7-a519-4ebd-bff1-66bc1451933e}" creatable="true" scriptable="true" category="fems.factory.nodestresscalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12LumpedMassMatrixFactory" uuid="{9cab0df2-5b80-4a2c-a2a2-b894fbcd2e99}" creatable="true" scriptable="true" category="fems.factory.hexabrick12mass">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleVolumeFactory" uuid="{56650860-07f3-45b5-bab1-b02b77b93503}" creatable="true" scriptable="true" category="fems.factory.elevolumeparser">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+  </feature>
+</plugin>

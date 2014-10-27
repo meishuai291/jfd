@@ -27,7 +27,8 @@ SET(org_sipesc_fems_bltdataprocess_src_files
     src/mjfdnodehandlerimpl.cxx
     src/mjfdmpchandlerimpl.cxx
     src/mjfdlineelementhandlerimpl.cxx
-    src/mjfd3dsolidelementhandlerimpl.cxx
+#    src/mjfd3dsolidelementhandlerimpl.cxx	# 8节点六面体
+    src/mjfd3d12solidelementhandlerimpl.cxx	# 12节点六面体
     src/mjfdnlineelementhandlerimpl.cxx
     src/mjfdcrodelementhandlerimpl.cxx
     src/mjfdforcehandlerimpl.cxx

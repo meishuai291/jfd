@@ -51,6 +51,8 @@ int main(int argc, char *argv[])
 
 //		mainTest.cleanupTestCase();
 
+//		mainTest.checkout();
+
 		std::cout << "\n***************Finite Element Analysis Complete!***************" << std::endl;
 	}
 //=======================================================================================

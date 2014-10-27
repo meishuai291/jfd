@@ -42,6 +42,8 @@ public:
 
 //	void scriptOutput(const QString&, const QString&);
 
+	void checkout();
+
 private:
 	MExtensionManager _extManager;
 	MObjectManager _objectManager;

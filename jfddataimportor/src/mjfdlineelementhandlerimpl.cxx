@@ -219,7 +219,7 @@ bool MJfdLineElementHandlerImpl::handleEntry(QTextStream* stream,
 			nMat=1;
 
 		int eleGroupId = 0;//单元组号
-		QString str = line.mid(80);
+		QString str = line.mid(70);
 		QRegExp rx("\\d+\\(");
 		int pos = rx.indexIn(str);
 		if (pos > -1)
