@@ -680,6 +680,7 @@ bool MBltResultHeaderExportorImpl::Data::SolidEleStress(QTextStream* stream, MPr
 	(*stream) << str1;
 	return true;
 }
+// TODO 杆单元轴力
 bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
 	QString str1;
 	int gId = eleGroup.getId();
@@ -718,6 +719,7 @@ bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MProp
 	(*stream) << str1;
 	return true;
 }
+// TODO 壳单元应力
 bool MBltResultHeaderExportorImpl::Data::ShellEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
 	QString str1;
 	int gId = eleGroup.getId();
@@ -813,6 +815,7 @@ bool MBltResultHeaderExportorImpl::Data::DynamicResultsOutput(QTextStream* strea
 }
 
 // ----------------------------------------------------------------------------------
+// TODO NPAR 参数
 QString MBltResultHeaderExportorImpl::Data::SolidEleMsg(int NEle, int GId) {
 
 	QString eleMseg = " E L E M E N T   D E F I N I T I O N\n\n\n";
@@ -829,10 +832,7 @@ QString MBltResultHeaderExportorImpl::Data::SolidEleMsg(int NEle, int GId) {
 	eleMseg += "     EQ.10, EMPTY\n";
 	eleMseg += "     EQ.11, 2-DIM FLUID ELEMENTS\n";
 	eleMseg += "     EQ.12, 3-DIM FLUID ELEMENTS\n\n";
-
-	eleMseg += " NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ). . ="
-			+ BltForamt::blank(NEle, 5) + "\n\n";
-
+	eleMseg += " NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ). . =" + BltForamt::blank(NEle, 5) + "\n\n";
 	eleMseg += " TYPE OF NONLINEAR ANALYSIS  . . . . . .( NPAR(3) ). . =    0\n";
 	eleMseg += "     EQ.0, LINEAR\n";
 	eleMseg += "     EQ.1, MATERIAL NONLINEARITY ONLY\n";
@@ -840,70 +840,44 @@ QString MBltResultHeaderExportorImpl::Data::SolidEleMsg(int NEle, int GId) {
 	eleMseg += "           SMALL STRAINS\n";
 	eleMseg += "     GE.3, LARGE DISPLACEMENTS WITH\n";
 	eleMseg += "           LARGE STRAINS\n\n\n";
-
-	eleMseg = eleMseg
-			+ " ELEMENT BIRTH AND DEATH OPTIONS . . . .( NPAR(4) ). . =    0\n";
+	eleMseg += " ELEMENT BIRTH AND DEATH OPTIONS . . . .( NPAR(4) ). . =    0\n";
 	eleMseg += "     EQ.0, OPTION NOT ACTIVE\n";
 	eleMseg += "     EQ.1, BIRTH OPTION ACTIVE\n";
 	eleMseg += "     EQ.2, DEATH OPTION ACTIVE\n";
 	eleMseg += "     EQ.3, DEATH AFTER BIRTH OPTION ACTIVE\n\n\n\n";
-
-	eleMseg = eleMseg + " SKEW COORDINATE SYSTEM\n";
-	eleMseg = eleMseg
-			+ "     REFERENCE INDICATOR . . . . . . . .( NPAR(6) ). . =    0\n";
+	eleMseg += " SKEW COORDINATE SYSTEM\n";
+	eleMseg += "     REFERENCE INDICATOR . . . . . . . .( NPAR(6) ). . =    0\n";
 	eleMseg += "     EQ.0, ALL ELEMENT NODES\n";
 	eleMseg += "           USE THE GLOBAL SYSTEM ONLY\n";
 	eleMseg += "     EQ.1, ELEMENT NODES REFER\n";
 	eleMseg += "           TO SKEW COORDINATE SYSTEM\n\n";
-
-	eleMseg = eleMseg + " MAX NUMBER OF NODES DESCRIBING\n";
-	eleMseg =
-			eleMseg
-					+ "     ANY ONE ELEMENT . . . . . . . . . .( NPAR(7) ). . =   12\n\n\n";
-
-	eleMseg = eleMseg
-			+ " DEGENERATION INDICATOR  . . . . . . . .( NPAR(8) ). . =    0\n";
+	eleMseg += " MAX NUMBER OF NODES DESCRIBING\n";
+	eleMseg += "     ANY ONE ELEMENT . . . . . . . . . .( NPAR(7) ). . =   12\n\n\n";
+	eleMseg += " DEGENERATION INDICATOR  . . . . . . . .( NPAR(8) ). . =    0\n";
 	eleMseg += "     EQ.0, NO DEGENERATION OR NO CORRECTION\n";
 	eleMseg += "           FOR SPATIAL ISOTROPY\n";
 	eleMseg += "     EQ.1, SPATIAL ISOTROPY CORRECTIONS\n";
 	eleMseg += "           APPLIED TO SPECIALLY\n";
 	eleMseg += "           DEGENERATED 20-NODE ELEMENTS\n\n";
-
-	eleMseg = eleMseg + " FLAG FOR CALCULATION OF ENERGY\n";
-	eleMseg = eleMseg
-			+ "     RELEASE RATES . . . . . . . . . . .( NPAR(9) ). . =    0\n";
+	eleMseg += " FLAG FOR CALCULATION OF ENERGY\n";
+	eleMseg += "     RELEASE RATES . . . . . . . . . . .( NPAR(9) ). . =    0\n";
 	eleMseg += "     EQ.0, NO CALCULATION\n";
 	eleMseg += "     EQ.1, CALCULATE ENERGY RELEASE RATES\n";
 	eleMseg += "           AT NODAL POINTS\n\n\n";
-
-	eleMseg = eleMseg + " INTEGRATION ORDER (R-S DIRECTIONS) FOR\n";
-	eleMseg =
-			eleMseg
-					+ "     ELEMENT STIFFNESS GENERATION. . . .( NPAR(10)). . =    4\n\n";
-
-	eleMseg = eleMseg + " INTEGRATION ORDER (T DIRECTION) FOR\n";
-	eleMseg =
-			eleMseg
-					+ "     ELEMENT STIFFNESS GENERATION. . . .( NPAR(11)). . =    4\n\n";
-
-	eleMseg = eleMseg
-			+ " NUMBER OF STRESS OUTPUT TABLES  . . . .( NPAR(13)). . =    1\n";
+	eleMseg += " INTEGRATION ORDER (R-S DIRECTIONS) FOR\n";
+	eleMseg += "     ELEMENT STIFFNESS GENERATION. . . .( NPAR(10)). . =    4\n\n";
+	eleMseg += " INTEGRATION ORDER (T DIRECTION) FOR\n";
+	eleMseg += "     ELEMENT STIFFNESS GENERATION. . . .( NPAR(11)). . =    4\n\n";
+	eleMseg += " NUMBER OF STRESS OUTPUT TABLES  . . . .( NPAR(13)). . =    1\n";
 	eleMseg += "     EQ.-1, PRINT NODAL FORCES\n";
 	eleMseg += "     EQ. 0, PRINT STRESSES AT INTEGRATION POINTS\n";
-	eleMseg = eleMseg
-			+ "     GT. 0, PRINT STRESSES AT STRESS OUTPUT POINTS\n\n\n\n\n";
-
-	eleMseg = eleMseg + " E L E M E N T   V A R I A B L E S\n\n\n";
-
-	eleMseg = eleMseg
-			+ " VARIABLES FLAG. . . . . . . . . . . . .( NPAR(14)). . =    0\n";
-	eleMseg = eleMseg + "     EQ. 0, DISPLACEMENT-BASED ELEMENT\n";
-	eleMseg = eleMseg
-			+ "     NE. 0, NPAR(14) PRESSURE VARIABLES PER ELEMENT\n\n";
-	eleMseg = eleMseg + " M A T E R I A L   D E F I N I T I O N\n\n\n";
-
-	eleMseg = eleMseg
-			+ " MATERIAL MODEL. . . . . . . . . . . . .( NPAR(15)). . =    1\n";
+	eleMseg += "     GT. 0, PRINT STRESSES AT STRESS OUTPUT POINTS\n\n\n\n\n";
+	eleMseg += " E L E M E N T   V A R I A B L E S\n\n\n";
+	eleMseg += " VARIABLES FLAG. . . . . . . . . . . . .( NPAR(14)). . =    0\n";
+	eleMseg += "     EQ. 0, DISPLACEMENT-BASED ELEMENT\n";
+	eleMseg += "     NE. 0, NPAR(14) PRESSURE VARIABLES PER ELEMENT\n\n";
+	eleMseg += " M A T E R I A L   D E F I N I T I O N\n\n\n";
+	eleMseg += " MATERIAL MODEL. . . . . . . . . . . . .( NPAR(15)). . =    1\n";
 	eleMseg += "     EQ. 1, LINEAR ELASTIC ISOTROPIC\n";
 	eleMseg += "     EQ. 2, LINEAR ELASTIC ORTHOTROPIC\n";
 	eleMseg += "     EQ. 3, THERMOELASTIC MODEL\n";
@@ -911,52 +885,43 @@ QString MBltResultHeaderExportorImpl::Data::SolidEleMsg(int NEle, int GId) {
 	eleMseg += "     EQ. 5, CONCRETE CRACKING MODEL\n";
 	eleMseg += "     EQ. 6, (EMPTY)\n";
 	eleMseg += "     EQ. 7, DRUCKER PRAGER (CAP) MODEL\n";
-	eleMseg += "\
-     EQ. 8, ELASTIC-PLASTIC WITH ISOTROPIC HARDENING  \n\
-     EQ. 9, ELASTIC-PLASTIC WITH KINEMATIC HARDENING  \n\
-     EQ.10, ELASTIC-PLASTIC WITH CREEP (ISOTROPIC)   \n\
-     EQ.11, ELASTIC-PLASTIC WITH CREEP (KINEMATIC)  \n\
-     EQ.12, (EMPTY)                                \n\
-     EQ.13, INCOMPRESSIBLE ELASTIC (MOONEY-RIVLIN) \n\
-     EQ.14, USER-SUPPLIED MODEL    \n\
- \n\
-  NUMBER OF DIFFERENT SETS OF MATERIAL \n\
-      CONSTANTS . . . . . . . . . . . . .( NPAR(16)). . =    1 \n\
- \n\
-  NUMBER OF MATERIAL CONSTANTS PER SET. .( NPAR(17)). . =    2 \n\
- \n\
-  NUMBER OF AXIS ORIENTATION SETS . . . .( NPAR(18)). . =    0 \n\
-  \n\
-  \n\
-  \n\
-   S T O R A G E   I N F O R M A T I O N \n\
- \n\
- \n\
-  LENGTH OF ARRAY NEEDED FOR STORING ELEMENT GROUP \n\
-  DATA (GROUP" + BltForamt::blank(GId,3) + "). . . . . . . . . . . . .( MIDEST ). . =    2402 \n\
- \n\
- \n\
-  MATERIAL CONSTANTS SET NUMBER ....     1 \n\
- \n\
-      DEN ..........( DENSITY ).. =  0.254840E+01 \n\
- \n\
-      E ............( PROP(1) ).. =  0.285000E+08 \n\
-      VNU ..........( PROP(2) ).. =  0.200000E+00 \n\
- \n\
- \n\
- \n\
- \n\
- \n\
-  S T R E S S   O U T P U T   T A B L E S \n\
- \n\
-      TABLE      1      2      3      4      5      6      7      8      9     10     11     12     13     14     15     16 \n\
- \n\
- \n\
-          1      1      2      3      4      5      6      7      8      0      0      0      0      0      0      0      0 \n\n\n\n";
+	eleMseg += "     EQ. 8, ELASTIC-PLASTIC WITH ISOTROPIC HARDENING \n";
+	eleMseg += "     EQ. 9, ELASTIC-PLASTIC WITH KINEMATIC HARDENING \n";
+	eleMseg += "     EQ.10, ELASTIC-PLASTIC WITH CREEP (ISOTROPIC) \n";
+	eleMseg += "     EQ.11, ELASTIC-PLASTIC WITH CREEP (KINEMATIC) \n";
+	eleMseg += "     EQ.12, (EMPTY) \n";
+	eleMseg += "     EQ.13, INCOMPRESSIBLE ELASTIC (MOONEY-RIVLIN) \n";
+	eleMseg += "     EQ.14, USER-SUPPLIED MODEL \n";
+	eleMseg += " \n";
+	eleMseg += " NUMBER OF DIFFERENT SETS OF MATERIAL \n";
+	eleMseg += "     CONSTANTS . . . . . . . . . . . . .( NPAR(16)). . =    1 \n";
+	eleMseg += " \n";
+	eleMseg += " NUMBER OF MATERIAL CONSTANTS PER SET. .( NPAR(17)). . =    2 \n";
+	eleMseg += " \n";
+	eleMseg += " NUMBER OF AXIS ORIENTATION SETS . . . .( NPAR(18)). . =    0 \n";
+	eleMseg += " \n\n\n\n\n";
+	eleMseg += " S T O R A G E   I N F O R M A T I O N \n";
+	eleMseg += " \n\n";
+	eleMseg += " LENGTH OF ARRAY NEEDED FOR STORING ELEMENT GROUP \n";
+	eleMseg += " DATA (GROUP" + BltForamt::blank(GId,3) + "). . . . . . . . . . . . .( MIDEST ). . =     986 \n";
+	eleMseg += " \n\n";
+	eleMseg += " MATERIAL CONSTANTS SET NUMBER ....     1 \n";
+	eleMseg += " \n";
+	eleMseg += "     DEN ..........( DENSITY ).. =  0.000000E+00 \n";	// TODO
+	eleMseg += " \n";
+	eleMseg += "     E ............( PROP(1) ).. =  0.000000E+00 \n";	// TODO
+	eleMseg += "     VNU ..........( PROP(2) ).. =  0.000000E+00 \n";	// TODO
+	eleMseg += " \n\n\n\n\n";
+	eleMseg += " S T R E S S   O U T P U T   T A B L E S \n";
+	eleMseg += " \n";
+	eleMseg += "     TABLE      1      2      3      4      5      6      7      8      9     10     11     12     13     14     15     16 \n";
+	eleMseg += " \n\n";
+	eleMseg += "         1      1      2      3      4      5      6      7      8      0      0      0      0      0      0      0      0 \n";
+	eleMseg += " \n\n\n";
 
 	return eleMseg;
 }
-
+// TODO NPAR 参数
 QString MBltResultHeaderExportorImpl::Data::RodEleMsg(int NEle, int GId)
 {
 	QString msg = " E L E M E N T   D E F I N I T I O N \n";
@@ -1034,11 +999,12 @@ QString MBltResultHeaderExportorImpl::Data::RodEleMsg(int NEle, int GId)
 	msg += "\n\n\n";
 	msg += "  SET           AREA            DEN              E \n";
 	msg += "\n";
-	msg += "    1   0.100000E+01   0.000000E+00   0.100000E+12 \n";
+	msg += "    1   0.000000E+00   0.000000E+00   0.000000E+00 \n";	// TODO
 	msg += "\n\n\n";
 
 	return msg;
 }
+// TODO NPAR 参数
 QString MBltResultHeaderExportorImpl::Data::ShellEleMsg(int NEle, int GId){
 	QString msg = " E L E M E N T  D E F I N I T I O N \n";
 	msg += "\n\n";
@@ -1105,12 +1071,12 @@ QString MBltResultHeaderExportorImpl::Data::ShellEleMsg(int NEle, int GId){
 	msg += "\n\n";
 	msg += " MATERIAL PROPERTY SET NO.    1 \n";
 	msg += "\n";
-	msg += "      DENSITY =    0.800200E+01 \n";
+	msg += "      DENSITY =    0.000000E+00 \n";	// TODO
 	msg += "\n\n";
 	msg += " ISOTROPIC PROPERTIES \n";
 	msg += "\n";
-	msg += " YOUNG*S MODULUS   E =    0.206000E+09 \n";
-	msg += " POISSON*S RATIO VNU =    0.200000E+00 \n";
+	msg += " YOUNG*S MODULUS   E =    0.000000E+00 \n";	// TODO
+	msg += " POISSON*S RATIO VNU =    0.000000E+00 \n";	// TODO
 	msg += "\n\n\n\n\n";
 	msg += " S T R E S S   O U T P U T   T A B L E \n";
 	msg += "\n";
