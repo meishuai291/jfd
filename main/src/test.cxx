@@ -56,6 +56,7 @@ Test::Test()
 	Q_ASSERT(!_extManager.isNull());
 	_objectManager = MObjectManager::getManager();
 	Q_ASSERT(!_objectManager.isNull());
+	std::cout.setf(std::ios::boolalpha);
 }
 
 Test::~Test()

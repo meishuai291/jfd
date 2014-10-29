@@ -19,7 +19,6 @@
 #include <org.sipesc.core.engdbs.data.mdatabasemanager.h>
 #include <org.sipesc.core.engdbs.data.mdataobjectlist.h>
 #include <org.sipesc.core.engdbs.data.mdatafactorymanager.h>
-#include <org.sipesc.fems.matrixassist.mvectorassistor.h>
 #include <org.sipesc.fems.data.mnodedata.h>
 #include <org.sipesc.fems.data.mpropertydata.h>
 #include <org.sipesc.fems.data.melementdata.h>
@@ -38,7 +37,6 @@ using namespace org::sipesc::core::utility;
 using namespace org::sipesc::utilities;
 using namespace org::sipesc::fems::global;
 using namespace org::sipesc::core::engdbs::data;
-using namespace org::sipesc::fems::matrixassist;
 using namespace org::sipesc::fems::matrix;
 using namespace org::sipesc::fems::bltexport;
 class MBltResultHeaderExportorImpl::Data {
@@ -761,7 +759,29 @@ bool MBltResultHeaderExportorImpl::Data::DynamicResultsOutput(QTextStream* strea
 	int count = DisPathModel.getTypeCount(MDatabaseGlobal::ManagerType);
 	int count2 = eigenValues.getCount();
 
-	QString strr = "   F R E Q U E N C I E S \n\n";
+	QString strr = "  F R E Q U E N C Y    A N A L Y S I S \n";
+	strr += "\n\n\n\n\n";
+	strr += "  E I G E N V A L U E S \n";
+	int ct = count2%6;
+	int ctn = count2/6;
+	for(int i=0;i<ctn;i++){
+		strr += "0";
+		for(int j=0;j<6;j++){
+			strr += BltForamt::sciNot(eigenValues(i*6+j), 15, 22);
+		}
+		strr += "\n";
+	}
+	if(ct!=0){
+		strr += "0";
+		int tt = count2-ct;
+		for(int i=0;i<ct;i++){
+			strr += BltForamt::sciNot(eigenValues(tt+i), 15, 22);
+		}
+		strr += "\n";
+	}
+	strr += "\n\n\n";
+
+	strr += "   F R E Q U E N C I E S \n\n";
 	strr += "      FREQUENCY NUMBER            FREQUENCY (RAD/SEC)      FREQUENCY (CYCLES/SEC)        PERIOD (SECONDS) \n\n";
 	for(int i=0;i<count2;i++){
 		double val = eigenValues(i);
