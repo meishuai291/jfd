@@ -39,6 +39,9 @@ using namespace org::sipesc::fems::global;
 using namespace org::sipesc::core::engdbs::data;
 using namespace org::sipesc::fems::matrix;
 using namespace org::sipesc::fems::bltexport;
+
+#include <mbaraxialforceparserimpl.h>
+
 class MBltResultHeaderExportorImpl::Data {
 public:
 	Data() {
@@ -433,11 +436,16 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 	str.append(eleHeader);
 	str.append(rodHeader);
 
-	for (int j = 0; j < Elecount; j++) {
-		QString sEid = BltForamt::blank(j + 1, 5);
-		QString length = BltForamt::sciNot(0,5,12);
+//	MBarAxialForceParserImpl barParser;
+//	barParser.initialize(_data->_model);
 
+	for (int j = 0; j < Elecount; j++) {
 		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
+
+		QString sEid = BltForamt::blank(j + 1, 5);
+
+//		double len = barParser.getSecArea(eleData1);
+		QString length = BltForamt::sciNot(0,5,12);
 
 		QString SnodeId = " ";
 		int gnc = eleData1.getNodeCount();
@@ -693,17 +701,17 @@ bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MProp
 
 	int Elecount = eleGroup.getValueCount();
 
+	MBarAxialForceParserImpl barParser;
+	barParser.initialize(_model);
+
 	for (int j = 0; j < Elecount; j++) {
 		QString sEid = BltForamt::blank(j + 1, 9);
 
-		MDataObjectList eleStressData1 = EleStressManager.getData(eleGroup.getValue(j).toInt());
-		QString ss;
-		MVector stress1V = _vFactory.createVector();
+		MDataObjectList eleStressData = EleStressManager.getData(eleGroup.getValue(j).toInt());
 
-		MVectorData stress1 = eleStressData1.getDataAt(0);	// 两个节点
-		stress1V << stress1;								// 六个自由度
+		double af = barParser.getAxialForce(eleStressData);
 
-		QString val = BltForamt::sciNot(stress1V(0), 7, 17);	// 轴力?
+		QString val = BltForamt::sciNot(af, 7, 17);	// 轴力?
 
 		str1 += sEid;
 		str1 += "         1";

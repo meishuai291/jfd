@@ -37,6 +37,8 @@ SET(org_sipesc_fems_bltdataprocess_src_files
     
     src/mjfdshellelementhandlerimpl.cxx
     
+    src/mbaraxialforceparserimpl.cxx    # 杆轴力解析
+    
     src/mbltdataexportorimpl.cxx
     src/mbltresultheaderexportorimpl.cxx
 #    src/mbltresultexportorimpl.cxx
