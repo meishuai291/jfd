@@ -436,16 +436,16 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 	str.append(eleHeader);
 	str.append(rodHeader);
 
-//	MBarAxialForceParserImpl barParser;
-//	barParser.initialize(_data->_model);
+	MBarAxialForceParserImpl barParser;
+	barParser.initialize(_model);
 
 	for (int j = 0; j < Elecount; j++) {
 		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
 
 		QString sEid = BltForamt::blank(j + 1, 5);
 
-//		double len = barParser.getSecArea(eleData1);
-		QString length = BltForamt::sciNot(0,5,12);
+		double len = barParser.getLength(eleData1);
+		QString length = BltForamt::sciNot(len,5,12);
 
 		QString SnodeId = " ";
 		int gnc = eleData1.getNodeCount();
