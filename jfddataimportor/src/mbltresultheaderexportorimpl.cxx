@@ -581,18 +581,29 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 		Q_ASSERT(isOk);
 		MDataManager EleStressManager = _dbManager.createDataManager();
 
+		MDataModel EleStressPathModel1 = _dbManager.createDataModel();
+		isOk = EleStressPathModel1.open(_model, "IntegralStressPath");
+		Q_ASSERT(isOk);
+		MDataModel EleStressModel1 = _dbManager.createDataModel();
+		isOk = EleStressModel1.open(EleStressPathModel1, QString::number(TimeStep));
+		Q_ASSERT(isOk);
+		MDataManager EleStressManager1 = _dbManager.createDataManager();
+
 		for (int i = 0; i < _elegroupcnt; i++) {
 
 			MPropertyData eleGroup = _EleGroupManager.getDataAt(i);
 			int gId = eleGroup.getId();
 			QString type = eleGroup.getType();
 			bool ok = EleStressManager.open(EleStressModel,type);
+			Q_ASSERT(ok);
+			ok = EleStressManager1.open(EleStressModel1,type);
+			Q_ASSERT(ok);
 
 			/**TODO 应力输出与单元类型有关，先测试实体单元 **/
 			if(type == "HexaBrick12Element" || type == "HexaBrickElement"){
 				SolidEleStress(stream,eleGroup,EleStressManager);
 			}else if(type == "BarElement"){
-				RodEleStress(stream, eleGroup,EleStressManager);
+				RodEleStress(stream, eleGroup,EleStressManager1);	// 采用积分点应力
 			}else if(type == "QuadDKQShElement"){
 				ShellEleStress(stream, eleGroup,EleStressManager);
 			}
@@ -710,14 +721,18 @@ bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MProp
 		MDataObjectList eleStressData = EleStressManager.getData(eleGroup.getValue(j).toInt());
 
 		double af = barParser.getAxialForce(eleStressData);
+		double as = barParser.getAxialStress(eleStressData);
+		double asa = barParser.getAxialStrain(eleStressData);
 
 		QString val = BltForamt::sciNot(af, 7, 17);	// 轴力?
+		QString vals = BltForamt::sciNot(as, 7, 17);
+		QString valsa = BltForamt::sciNot(asa, 7, 17);
 
 		str1 += sEid;
 		str1 += "         1";
 		str1 += val;
-		str1 += val;
-		str1 += val;
+		str1 += vals;
+		str1 += valsa;
 		str1 += "\n\n";
 	}
 

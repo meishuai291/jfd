@@ -26,6 +26,8 @@ public:
 
 public:
     double getAxialForce(const MDataObject&);
+    double getAxialStress(const MDataObject&);
+    double getAxialStrain(const MDataObject&);
     double getSecArea(const MDataObject&);
     double getLength(const MDataObject&);
 private:
