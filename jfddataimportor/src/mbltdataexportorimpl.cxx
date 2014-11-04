@@ -92,7 +92,7 @@ bool MBltDataExportorImpl::start(const QVariant& control){
 	fileName = control.toString();
 	QFile outFile;
 	outFile.setFileName(fileName);
-	if (!outFile.open(QIODevice::WriteOnly))
+	if (!outFile.open(QIODevice::Text|QIODevice::WriteOnly))
 	{
 		QString message = QString("Can't open %1 file "
 				"in MBltDataExportorImpl::start()!").arg(fileName);

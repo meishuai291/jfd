@@ -6,6 +6,8 @@
  */
 #include <format.h>
 
+#define QUAD 1
+
 #include <mbltresultheaderexportorimpl.h>
 #include <org.sipesc.fems.matrix.mvectorfactory.h>
 #include <org.sipesc.fems.matrix.mvector.h>
@@ -487,6 +489,9 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 	QString str;
 	QString groupId = BltForamt::blank(id, 5);     ///=号后9位，gid在前5位
 	str.append(" E L E M E N T   G R O U P ........................... =" + groupId + "    ( LINEAR )\n\n\n\n");
+
+
+#if QUAD	// 四边形
 	str.append(ShellEleMsg(Elecount, id));
 	str.append(eleHeader);
 	str.append(shellHeader);
@@ -506,6 +511,37 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 		str.append(sEid + shellEH + thick + shellEH2 + SnodeId);   //存入一个单元块信息
 		str += "\n\n";
 	}
+#else	// 三角形
+	str.append(ShellEleMsg(Elecount*2, id));
+	str.append(eleHeader);
+	str.append(shellHeader);
+
+	for (int j = 0; j < Elecount; j++) {
+		QString sEid = BltForamt::blank(2*j + 1, 5);
+		QString thick = BltForamt::sciNot(0,4,10);
+
+		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
+
+		QString SnodeId;
+//		int gnc = eleData1.getNodeCount();
+		for (int ttt = 0; ttt < 3; ttt++) {
+			int nodeId = eleData1.getNodeId(ttt);
+			SnodeId += BltForamt::blank(nodeId, 6);
+		}
+		str.append(sEid + shellEH + thick + shellEH2 + SnodeId);   //存入一个单元块信息
+		str += "\n\n";
+
+		SnodeId.clear();
+		sEid = BltForamt::blank(2*j + 2, 5);
+		{
+			SnodeId += BltForamt::blank(eleData1.getNodeId(0), 6);
+			SnodeId += BltForamt::blank(eleData1.getNodeId(2), 6);
+			SnodeId += BltForamt::blank(eleData1.getNodeId(3), 6);
+		}
+		str.append(sEid + shellEH + thick + shellEH2 + SnodeId);   //存入一个单元块信息
+		str += "\n\n";
+	}
+#endif
 
 	(*stream) << str;
 	return true;
@@ -742,10 +778,125 @@ bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MProp
 }
 // TODO 壳单元应力
 bool MBltResultHeaderExportorImpl::Data::ShellEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
-	QString str1;
 	int gId = eleGroup.getId();
 	QString type = eleGroup.getType();
+	int eleCount = eleGroup.getValueCount();
 	QString groupId = BltForamt::blank(gId, 5);     ///=号后9位，gid在前5位
+
+	QString str1;
+
+#if QUAD	// 实体格式
+	str1 += " S T R E S S   C A L C U L A T I O N S   F O R   E L E M E N T   G R O U P    " + groupId + "   (3/D CONTINUUM) \n";
+	str1 += "\n";
+	str1 += " STRESSES ARE CALCULATED IN THE GLOBAL COORDINATE SYSTEM \n";
+	str1 += "\n\n";
+	str1 += " ELEMENT   STRESS TABLE                                 STRESSES / TOTAL STRAINS \n";
+	str1 += "  NUMBER      POINT                                   C  O  M  P  O  N  E  N  T  S \n";
+	str1 += "               ITB              XX            YY            ZZ            XY            XZ            YZ \n";
+	str1 += "\n";
+	str1 += "                                    (STRAINS ARE ONLY PRINTED WHEN ELEMENT FLAG (IPS) SO INDICATES) \n";
+	str1 += "\n\n";
+
+	for (int j = 0; j < eleCount; j++) {
+		int eleId = eleGroup.getValue(j).toInt();
+		QString sEid = BltForamt::blank(j + 1, 8) + "\n";
+
+		MDataObjectList eleStressData = EleStressManager.getData(eleId);
+		MVector stressV = _vFactory.createVector();
+
+		QString ss, ss2;
+		int cc = eleStressData.getDataCount();
+		for (int n = 0; n < cc; n++) {
+			MVectorData stress = eleStressData.getDataAt(n);
+			stressV<< stress;
+
+			ss += BltForamt::blank(n + 1, 17) + QString("         ");
+			ss2 += BltForamt::blank(n + 5, 17) + QString("         ");
+			int vcc = stressV.getCount();
+			for (int vi = 0; vi < vcc; vi++) {
+				ss += BltForamt::sciNot(stressV(vi), 6, 14);
+				ss2 += BltForamt::sciNot(-stressV(vi), 6, 14);
+			}
+			ss += "\n";
+			ss2 += "\n";
+		}
+		ss2 += "\n";
+
+		str1.append(sEid);
+		str1.append(ss);
+		str1.append(ss2);
+	}
+
+
+#else // 三角形板壳格式
+	str1 += " S T R E S S   C A L C U L A T I O N S   F O R   E L E M E N T   G R O U P      " +groupId + "  ( PLATE TRIANGULAR ELEMENT ) \n";
+	str1 += " \n";
+	str1 += " STRESSES ARE CALCULATED IN THE LOCAL COORDINATE SYSTEM \n";
+	str1 += " \n\n";
+	str1 += " ELEMENT   OUTPUT          MEMBRANE FORCES   (PER UNIT LENGTH)                BENDING MOMENTS   (PER UNIT LENGTH) \n";
+	str1 += "  NUMBER  LOCATION \n";
+	str1 += "        FOR  MOMENTS           NX               NY              NXY               MX               MY              MXY \n";
+	str1 += " \n\n";
+
+
+	for (int j = 0; j < eleCount; j++) {
+		int eleId = eleGroup.getValue(j).toInt();
+
+		QString sEid1 = BltForamt::blank(2*j + 1, 6);
+		QString sEid2 = BltForamt::blank(2*j + 2, 6);
+
+		MDataObjectList eleStressData = EleStressManager.getData(eleId);
+		MVector stressV = _vFactory.createVector();
+
+		QString ss1;
+		sEid1 += "\n";
+		for (int n = 0; n < 3; n++) {
+			MVectorData stress1 = eleStressData.getDataAt(n);
+			stressV<< stress1;
+
+			ss1 += BltForamt::blank(n + 1, 15) + QString(" ");
+			ss1 += QString("                                                   ");
+			for (int vi = 3; vi < 6; vi++) {
+				ss1 += BltForamt::sciNot(stressV(vi), 7, 17);
+			}
+			ss1 += "\n";
+		}
+		ss1 += "\n\n";
+
+		QString ss2;
+		{
+			int n = 0;
+			MVectorData stress1 = eleStressData.getDataAt(n);
+			stressV<< stress1;
+
+			sEid2 += "\n";
+
+			ss2 += BltForamt::blank(n+1, 15) + QString(" ");
+			ss2 += QString("                                                   ");
+			for (int vi = 3; vi < 6; vi++) {
+				ss2 += BltForamt::sciNot(stressV(vi), 7, 17);
+			}
+			ss2 += "\n";
+		}
+		for (int n = 2; n < 4; n++) {
+			MVectorData stress1 = eleStressData.getDataAt(n);
+			stressV<< stress1;
+
+			ss2 += BltForamt::blank(n + 1, 15) + QString(" ");
+			ss2 += QString("                                                   ");
+			for (int vi = 3; vi < 6; vi++) {
+				ss2 += BltForamt::sciNot(stressV(vi), 7, 17);
+			}
+			ss2 += "\n";
+		}
+		ss2 += "\n\n";
+
+		str1.append(sEid1);
+		str1.append(ss1);
+		str1.append(sEid2);
+		str1.append(ss2);
+	}
+#endif
 
 	(*stream) << str1;
 	return true;
