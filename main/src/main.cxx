@@ -11,7 +11,6 @@
 #include <QTextCodec>
 #include <QFileInfo>
 #include <QCoreApplication>
-using namespace std;
 
 bool inputIsTrue = false;
 QMap<QString, QString> inputComdsMap;
@@ -21,7 +20,10 @@ void parseCommands(QStringList commands);
 int main(int argc, char *argv[])
 {
 	QCoreApplication app(argc, argv);
-	QTextCodec::setCodecForTr(QTextCodec::codecForName("utf-8"));
+	QTextCodec* codec = QTextCodec::codecForName("utf-8");
+	QTextCodec::setCodecForTr(codec);
+	QTextCodec::setCodecForCStrings(codec);
+	QTextCodec::setCodecForLocale(codec);
 
 	parseCommands(QCoreApplication::arguments()); //解析传入参数
 	if (!inputIsTrue){
@@ -49,7 +51,7 @@ int main(int argc, char *argv[])
 		
 		mainTest.output(out);
 
-//		mainTest.cleanupTestCase();
+		mainTest.cleanupTestCase();
 
 //		mainTest.checkout();
 
@@ -63,13 +65,13 @@ int main(int argc, char *argv[])
 
 void printUsage()
 {
-	std::cout << setiosflags(ios::left);
+	std::cout << setiosflags(std::ios::left);
 
-	std::cout << "USAGE:" << endl;
-	std::cout << "  main [OPTION] <parameters>" << endl;
-	std::cout << "OPTIONS:" << endl;
-	std::cout << "  -g   BLT Input FileName" << endl;
-	std::cout << "  -i   JFD Input FileName" << endl;
+	std::cout << "USAGE:" << std::endl;
+	std::cout << "  main [OPTION] <parameters>" << std::endl;
+	std::cout << "OPTIONS:" << std::endl;
+	std::cout << "  -g   BLT Input FileName" << std::endl;
+	std::cout << "  -i   JFD Input FileName" << std::endl;
 	return;
 }
 

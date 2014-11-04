@@ -22,6 +22,7 @@
 #include <org.sipesc.core.engdbs.data.mdataobjectlist.h>
 #include <org.sipesc.core.engdbs.data.mdatafactorymanager.h>
 #include <org.sipesc.fems.data.mnodedata.h>
+#include <org.sipesc.fems.data.mpropertyrefdata.h>
 #include <org.sipesc.fems.data.mpropertydata.h>
 #include <org.sipesc.fems.data.melementdata.h>
 #include <org.sipesc.fems.matrix.mvectordata.h>
@@ -31,6 +32,8 @@
 #include <org.sipesc.core.utility.progressmonitor.h>
 #include <org.sipesc.utilities.msharedvariablesmanager.h>
 #include <org.sipesc.fems.global.mfemsglobal.h>
+#include <org.sipesc.fems.global.melementsglobal.h>
+
 #include <QDate>
 #include <iostream>
 using namespace std;
@@ -59,11 +62,13 @@ public:
 	ProgressMonitor _monitor;
 	MDatabaseManager _dbManager;
 	MFemsGlobal _femsGlobal;
+	MElementsGlobal _meleGl;
 	bool _isRepeated;
 	bool _isInitialized;
 
 	MDataModel _model, _elementPath;
 	MDataManager _LcaseManager, _EleGroupManager;
+	MDataManager _proManager, _geoManager;
 
 	MVectorFactory _vFactory;
 	int _elegroupcnt;
@@ -108,6 +113,9 @@ MBltResultHeaderExportorImpl::MBltResultHeaderExportorImpl() {
 
 	_data->_femsGlobal = _data->_objManager.getObject("org.sipesc.fems.global.femsglobal");
 	Q_ASSERT(!_data->_femsGlobal.isNull());
+
+	_data->_meleGl = _data->_objManager.getObject("org.sipesc.fems.global.elementsglobal");
+	Q_ASSERT(!_data->_meleGl.isNull());
 }
 
 MBltResultHeaderExportorImpl::~MBltResultHeaderExportorImpl() {
@@ -118,6 +126,35 @@ bool MBltResultHeaderExportorImpl::initialize(MDataModel& model,
 	if (_data->_isInitialized)
 		return false; //不能重复初始化
 	_data->_model = model;
+	bool isOk;
+
+	MDataModel proModel = _data->_dbManager.createDataModel();
+	isOk = proModel.open(model, _data->_femsGlobal.getValue(MFemsGlobal::PropertyRefPath), true);
+	Q_ASSERT(isOk);
+	if (!isOk){
+		QString errorMessage = "can't open PropertyRefPath DataModel"
+		  "                 in MBltResultHeaderExportorImpl::initialize";
+		_data->_monitor.setMessage(errorMessage);
+		return false;
+	}
+	_data->_proManager = _data->_dbManager.createDataManager();
+	isOk = _data->_proManager.open(proModel, _data->_femsGlobal.getValue(MFemsGlobal::GeneralRef), true);
+	Q_ASSERT(isOk);
+	if (!isOk){
+		QString errorMessage = "can't open GeneralRef DataManager"
+		  "                 in MBltResultHeaderExportorImpl::initialize";
+		_data->_monitor.setMessage(errorMessage);
+		return false;
+	}
+	_data->_geoManager = _data->_dbManager.createDataManager();
+	isOk = _data->_geoManager.open(model, _data->_femsGlobal.getValue(MFemsGlobal::Geometry), true);
+	Q_ASSERT(isOk);
+	if (!isOk){
+		QString errorMessage = "can't open Geometry DataManager"
+		  "                 in MBltResultHeaderExportorImpl::initialize";
+		_data->_monitor.setMessage(errorMessage);
+		return false;
+	}
 
 	_data->_isInitialized = true;
 	return true;
@@ -498,14 +535,21 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 
 	for (int j = 0; j < Elecount; j++) {
 		QString sEid = BltForamt::blank(j + 1, 5);
-		QString thick = BltForamt::sciNot(0,4,10);
 
-		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
+		int eleId = eleGroup.getValue(j).toInt();
+		MElementData eleData = EleManager.getData(eleId);
+
+		qint32 proId = eleData.getPropertyId();
+		MPropertyRefData pData = _proManager.getData(proId);
+		qint32 geoId = pData.getPropertyId(_meleGl.getValue(MElementsGlobal::GeometryId));
+		MPropertyData geoData = _geoManager.getData(geoId);
+		float th = geoData.getValue(0).toFloat();
+		QString thick = BltForamt::sciNot(th,4,10);
 
 		QString SnodeId;
-		int gnc = eleData1.getNodeCount();
+		int gnc = eleData.getNodeCount();
 		for (int ttt = 0; ttt < gnc; ttt++) {
-			int nodeId = eleData1.getNodeId(ttt);
+			int nodeId = eleData.getNodeId(ttt);
 			SnodeId += BltForamt::blank(nodeId, 6);
 		}
 		str.append(sEid + shellEH + thick + shellEH2 + SnodeId);   //存入一个单元块信息
@@ -635,7 +679,7 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 			ok = EleStressManager1.open(EleStressModel1,type);
 			Q_ASSERT(ok);
 
-			/**TODO 应力输出与单元类型有关，先测试实体单元 **/
+			/** 应力输出与单元类型有关，先测试实体单元 **/
 			if(type == "HexaBrick12Element" || type == "HexaBrickElement"){
 				SolidEleStress(stream,eleGroup,EleStressManager);
 			}else if(type == "BarElement"){
@@ -733,7 +777,7 @@ bool MBltResultHeaderExportorImpl::Data::SolidEleStress(QTextStream* stream, MPr
 	(*stream) << str1;
 	return true;
 }
-// TODO 杆单元轴力
+// 杆单元轴力
 bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
 	QString str1;
 	int gId = eleGroup.getId();

@@ -38,7 +38,6 @@ using namespace org::sipesc::utilities;
 using namespace org::sipesc::fems::global;
 using namespace org::sipesc::fems::bdfimport;
 using namespace org::sipesc::fems::femstask;
-using namespace std;
 
 #include <org.sipesc.fems.data.mloadcasedata.h>
 #include <org.sipesc.fems.data.mloadcomponent.h>
@@ -270,7 +269,7 @@ void Test::output(const QString& fileName){
 	ok = task.initialize(_model);
 	Q_ASSERT(ok);
 
-	std::cout << fileName.toStdString() << std::endl;
+	std::cout << fileName.toLocal8Bit().data() << std::endl;
 	ok = task.start(fileName);
 	Q_ASSERT(ok);
 	std::cout << "Time Elapsed==>" << time.elapsed() / 1000.0
@@ -338,7 +337,7 @@ void Test::checkout(){
 //    	int index = controlMatrix.getControlDofNumber(2);
 //    	qDebug() << index;
 #endif
-#if	1
+#if	0
 	MDataModel ee = dbManager.createDataModel();
 	bool ok = ee.open(_model, "ElementPath");
 	MDataManager bb = dbManager.createDataManager();
