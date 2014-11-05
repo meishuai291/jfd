@@ -211,7 +211,11 @@ void Test::import(const QString& importName)
 	MAnalysisFlowCommands analysisCommands = analysisFactory.createExtension();
 	_taskCommands = analysisCommands.getFlowCommands();
 	QVector<QString>::iterator vi = _taskCommands.end();
-	_taskCommands.erase(vi-1);
+
+	// 若模型文件为 jfd 则不输出 unv。
+	if(suffix.compare("jfd",Qt::CaseInsensitive) == 0){
+		_taskCommands.erase(vi-1);
+	}
 
 	return;
 }

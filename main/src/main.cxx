@@ -20,7 +20,7 @@ void parseCommands(QStringList commands);
 int main(int argc, char *argv[])
 {
 	QCoreApplication app(argc, argv);
-	QTextCodec* codec = QTextCodec::codecForName("utf-8");
+	QTextCodec* codec = QTextCodec::codecForName("system");
 	QTextCodec::setCodecForTr(codec);
 	QTextCodec::setCodecForCStrings(codec);
 	QTextCodec::setCodecForLocale(codec);
@@ -37,7 +37,8 @@ int main(int argc, char *argv[])
 	QString out = fi.absolutePath() + '/' + fi.completeBaseName() + ".out";
 	QString workSpace = fi.absolutePath();
 	QString programName = "SiPESC.FEMS";
-
+	QFileInfo fi2(jfd);
+	QString type = fi2.suffix();
 //=======================================================================================
 	{
 		std::cout << "\n***************Finite Element Analysis start!***************" << std::endl;
@@ -49,7 +50,10 @@ int main(int argc, char *argv[])
 
 		mainTest.solve(jfd);
 		
-		mainTest.output(out);
+		// 若模型文件为 jfd 则输出 out。
+		if(type.compare("jfd",Qt::CaseInsensitive) == 0){
+			mainTest.output(out);
+		}
 
 		mainTest.cleanupTestCase();
 
