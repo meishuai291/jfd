@@ -122,6 +122,7 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 	Q_ASSERT(ok);
 	ok = _model.clear();
 	Q_ASSERT(ok);
+	_modelOri = _model;
 
 	MDataManager localCoords = dbManager.createDataManager();
 	ok = localCoords.open(_model, "LocalCoordTransMatrix", false);
@@ -134,8 +135,11 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 
 void Test::cleanupTestCase()
 {
-	_db.close();
+	bool isOk = _db.close();
+	Q_ASSERT(isOk);
+
 	_model = MExtension();
+	_modelOri = MExtension();
 	_db = MExtension();
 	MPluginManager::cleanup();
 
@@ -186,7 +190,9 @@ void Test::import(const QString& importName)
 	ok = importor.import(importName);
 	Q_ASSERT(ok);
 	std::cout << "Time Elapsed==>" << time.elapsed() / 1000.0 << " seconds\n";
+}
 
+void Test::parseAnalysisType(const QString& type){
 	MFemsGlobal femsGl = _objectManager.getObject(
 			"org.sipesc.fems.global.femsglobal");
 	Q_ASSERT(!femsGl.isNull());
@@ -204,8 +210,15 @@ void Test::import(const QString& importName)
 	std::cout << "Analysis Type = " << analysis.toStdString() << std::endl;
 
 	//分析流程
-	ok = factoryManager.renew("fems.factory.analysisflow");
+	MExtensionFactoryManager factoryManager = _extManager.createExtension(
+			"org.sipesc.utilities.MExtensionFactoryManager");
+	if(factoryManager.isNull()){
+		std::cout << "MExtensionFactoryManager is Null." << std::endl;
+		return;
+	}
+	bool ok = factoryManager.initialize("fems.factory.analysisflow");
 	Q_ASSERT(ok);
+
 	MExtensionFactory analysisFactory = factoryManager.getFactory(analysis);
 	Q_ASSERT(!analysisFactory.isNull());
 	MAnalysisFlowCommands analysisCommands = analysisFactory.createExtension();
@@ -213,18 +226,53 @@ void Test::import(const QString& importName)
 	QVector<QString>::iterator vi = _taskCommands.end();
 
 	// 若模型文件为 jfd 则不输出 unv。
-	if(suffix.compare("jfd",Qt::CaseInsensitive) == 0){
+	if(type.compare("jfd",Qt::CaseInsensitive) == 0){
 		_taskCommands.erase(vi-1);
 	}
 
-	return;
 }
 
 bool Test::solve(const QString& importName)
 {
 	QString fileName = importName;
 	QFileInfo fi(fileName);
+	QString suffix = fi.suffix();
+	QString fileBaseName = fi.baseName();
 
+	parseAnalysisType(suffix);
+	bool isOk = solveIn(fileBaseName);
+	if(!isOk)
+		return false;
+
+#ifndef MULTIPLE_ANALYSIS
+	qDebug() << "------------------------------------- MULTIPLE_ANALYSIS";
+
+	// 第二种分析
+	MDatabaseManager dbManager = _objectManager.getObject(
+			QString("org.sipesc.core.engdbs.mdatabasemanager"));
+	Q_ASSERT(!dbManager.isNull());
+	if(_model.exists("SecondAnalysisPath",MDatabaseGlobal::ModelType)){
+		MDataModel modelAnother = dbManager.createDataModel();
+		bool ok = modelAnother.open(_model, "SecondAnalysisPath");
+		if (!ok){
+			std::cout << "can't open SecondAnalysisPath DataModel in MJfdDataImportorImpl::import() " << std::endl;
+			return false;
+		}
+
+		_model = modelAnother;
+		parseAnalysisType(suffix);
+		bool isOk = solveIn(fileBaseName);
+		if(!isOk)
+			return false;
+	}
+
+	_model.close();
+	_model = _modelOri;
+#endif
+
+	return true;
+}
+bool Test::solveIn(const QString& fileBaseName){
 	MProgressIndicator indicator = _extManager.createExtension(
 			"org.sipesc.utilities.MSimpleProgressIndicator"); //indicator
 	Q_ASSERT(!indicator.isNull());
@@ -245,7 +293,7 @@ bool Test::solve(const QString& importName)
 		Q_ASSERT(!monitor.isNull());
 		indicator.setMonitor(monitor);
 
-		ok = task.start(fi.baseName());
+		ok = task.start(fileBaseName);
 		Q_ASSERT(ok);
 		std::cout << "Time Elapsed==>" << time.elapsed() / 1000.0 << " seconds\n";
 	}
@@ -253,6 +301,7 @@ bool Test::solve(const QString& importName)
 	return true;
 }
 void Test::output(const QString& fileName){
+	_model = _modelOri;	// 恢复根 model
 
 	MProgressIndicator indicator = _extManager.createExtension(
 			"org.sipesc.utilities.MSimpleProgressIndicator"); //indicator

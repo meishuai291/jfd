@@ -52,10 +52,13 @@ class MJfdDataImportorImpl::Data
 public:
 	Data()
 	{
+		_objManager = MObjectManager::getManager();
+		_extManager = MExtensionManager::getManager();
 		_isInitialized = false;
 	}
 public:
 	MObjectManager _objManager;
+	MExtensionManager _extManager;
 	ProgressMonitor _monitor;
 
 	MFemsGlobal _femsGlobal;
@@ -69,6 +72,7 @@ public:
 	int _handledLine; //已读行号
 
 	MDataModel _model;
+	MDataModel _modelOri;
 	QTextStream _stream; //导入文件数据流
 	QTextStream _logStream; //log文件数据流
 
@@ -97,7 +101,7 @@ public:
 		 * 第0行
 		 * [0]: 标题行
 		 */
-		_readLine();
+//		_readLine();
 		/*
 		 * 第1行
 		 * [1]: 节点单元坐标
@@ -319,15 +323,30 @@ MJfdDataImportorImpl::MJfdDataImportorImpl()
 		mReportError(M_ERROR_FATAL, "MJfdDataImportorImpl::"
 				"MJfdDataImportorImpl() ****** failed");
 
-	_data->_objManager = MObjectManager::getManager();
 	UtilityManager util = _data->_objManager.getObject("org.sipesc.core.utility.utilitymanager");
 	Q_ASSERT(!util.isNull());
+
 	_data->_monitor = util.createProgressMonitor("MJfdDataImportor", ProgressMonitor());
 	Q_ASSERT(!_data->_monitor.isNull());
-}
-MJfdDataImportorImpl::~MJfdDataImportorImpl()
-{
 
+	_data->_femsGlobal = _data->_objManager.getObject("org.sipesc.fems.global.femsglobal");
+	Q_ASSERT(!_data->_femsGlobal.isNull());
+
+	_data->_dynamicsGlobal = _data->_objManager.getObject("org.sipesc.fems.global.dynamicsglobal");
+	Q_ASSERT(!_data->_dynamicsGlobal.isNull());
+
+	_data->_baseManager = _data->_objManager.getObject("org.sipesc.core.engdbs.mdatabasemanager");
+	Q_ASSERT(!_data->_baseManager.isNull());
+
+	_data->_factoryManager = _data->_objManager.getObject("org.sipesc.core.engdbs.mdatafactorymanager");
+	Q_ASSERT(!_data->_factoryManager.isNull());
+
+	_data->_extFactoryManager = _data->_extManager.createExtension("org.sipesc.utilities.MExtensionFactoryManager");
+	Q_ASSERT(!_data->_extFactoryManager.isNull());
+	_data->_extFactoryManager.initialize( "fems.factory.jfdentryhandler");
+}
+MJfdDataImportorImpl::~MJfdDataImportorImpl(){
+	_data->_modelOri = MExtension();
 }
 
 bool MJfdDataImportorImpl::initialize(MDataModel& model, bool isRepeated)
@@ -341,31 +360,36 @@ bool MJfdDataImportorImpl::initialize(MDataModel& model, bool isRepeated)
 	_data->_blockNum.resize(_data->_blockList.count());
 
 	_data->_model = model;
+	_data->_modelOri = _data->_model;
 
-	_data->_femsGlobal = _data->_objManager.getObject("org.sipesc.fems.global.femsglobal");
-	Q_ASSERT(!_data->_femsGlobal.isNull());
-	_data->_dynamicsGlobal = _data->_objManager.getObject("org.sipesc.fems.global.dynamicsglobal");
-	Q_ASSERT(!_data->_dynamicsGlobal.isNull());
+	bool isOk = initDatabase(_data->_model);
+	if (!isOk){
+		QString str = _data->_model.getName();
+		QString errorMessage ="In " + str +" DataModel, "
+						"can't open some DataManager or DataModel in MJfdDataImportorImpl::initialize().";
+		qDebug() << errorMessage;
+		_data->_monitor.setMessage(errorMessage);
+		return false;
+	}
 
-	_data->_baseManager = _data->_objManager.getObject("org.sipesc.core.engdbs.mdatabasemanager");
-	Q_ASSERT(!_data->_baseManager.isNull());
-
-	_data->_factoryManager = _data->_objManager.getObject("org.sipesc.core.engdbs.mdatafactorymanager");
-	Q_ASSERT(!_data->_factoryManager.isNull());
+	_data->_isInitialized = true;
+	return true;
+}
+bool MJfdDataImportorImpl::initDatabase(MDataModel& model){
 
 	_data->_dynamicPara = _data->_baseManager.createDataManager();
-	bool ok = _data->_dynamicPara.open(_data->_model, _data->_femsGlobal.getValue(MFemsGlobal::Vibration));
+	bool ok = _data->_dynamicPara.open(model, _data->_femsGlobal.getValue(MFemsGlobal::Vibration));
 	if (!ok)
 	{
 		QString errorMessage =
-				"can't open MFEMS::DynamicParameter DataManager in MJfdDataImportorImpl::initialize() ";
+				"can't open MVibration DataManager in MJfdDataImportorImpl::initialize() ";
 		qDebug() << errorMessage;
 		_data->_monitor.setMessage(errorMessage);
 		return false;
 	}
 
 	_data->_loadPath = _data->_baseManager.createDataModel();
-	ok = _data->_loadPath.open(_data->_model, _data->_femsGlobal.getValue(MFemsGlobal::LoadPath));
+	ok = _data->_loadPath.open(model, _data->_femsGlobal.getValue(MFemsGlobal::LoadPath));
 	if (!ok)
 	{
 		QString errorMessage =
@@ -376,7 +400,7 @@ bool MJfdDataImportorImpl::initialize(MDataModel& model, bool isRepeated)
 	}
 
 	_data->_loadcase = _data->_baseManager.createDataManager();
-	ok = _data->_loadcase.open(_data->_model, _data->_femsGlobal.getValue(MFemsGlobal::LoadCase));
+	ok = _data->_loadcase.open(model, _data->_femsGlobal.getValue(MFemsGlobal::LoadCase));
 	if (!ok)
 	{
 		QString errorMessage =
@@ -387,7 +411,7 @@ bool MJfdDataImportorImpl::initialize(MDataModel& model, bool isRepeated)
 	}
 
 	_data->_table = _data->_baseManager.createDataManager();
-	ok = _data->_table.open(_data->_model, _data->_femsGlobal.getValue(MFemsGlobal::LoadTable));
+	ok = _data->_table.open(model, _data->_femsGlobal.getValue(MFemsGlobal::LoadTable));
 	if (!ok)
 	{
 		QString errorMessage =
@@ -397,12 +421,8 @@ bool MJfdDataImportorImpl::initialize(MDataModel& model, bool isRepeated)
 		return false;
 	}
 
-	MExtensionManager extManager = MExtensionManager::getManager();
-	_data->_extFactoryManager = extManager.createExtension("org.sipesc.utilities.MExtensionFactoryManager");
-	Q_ASSERT(!_data->_extFactoryManager.isNull());
-	_data->_extFactoryManager.initialize( "fems.factory.jfdentryhandler");
 
-	_data->_isInitialized = true;
+
 	return true;
 }
 
@@ -446,6 +466,65 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 	}
 	_data->_logStream.setDevice(&logFile); //定义log文件的数据流
 
+	QString firstLine = _data->_readLine();
+	importIn();	// 1
+
+#ifndef MULTIPLE_ANALYSIS
+	qDebug() << "------------------------------------- MULTIPLE_ANALYSIS";
+
+	/** 对于含两种以上分析类型的jfd文件，各个分析数据独立，因此可分别读取处理
+	 *  默认，根model存储第一种分析类型，其他分析数据存储于子model中
+	 *  如：第二个分析 SecondAnalysisPath
+	 *  对于本项目，最多含有两种分析类型 **/
+
+	while(true){
+		QString line = _data->_readLine();
+
+		if(line.left(4) == "stop" || _data->_stream.atEnd())
+			break;
+
+		if(line == firstLine){
+			MDataModel modelAnother = _data->_baseManager.createDataModel();
+			bool ok = modelAnother.open(_data->_model, "SecondAnalysisPath");
+			if (!ok)
+			{
+				QString errorMessage =
+						"can't open SecondAnalysisPath DataModel in MJfdDataImportorImpl::import() ";
+				qDebug() << errorMessage;
+				_data->_monitor.setMessage(errorMessage);
+				return false;
+			}
+			MDataManager localCoords = _data->_baseManager.createDataManager();
+			ok = localCoords.open(modelAnother, "LocalCoordTransMatrix", false);
+			Q_ASSERT(ok);
+
+			_data->_model = modelAnother;
+			bool isOk = initDatabase(_data->_model);
+			if (!isOk){
+				QString str = _data->_model.getName();
+				QString errorMessage ="In " + str +" DataModel, "
+								"can't open some DataManager or DataModel in MJfdDataImportorImpl::import().";
+				qDebug() << errorMessage;
+				_data->_monitor.setMessage(errorMessage);
+				return false;
+			}
+
+			importIn();	// 2
+
+			_data->_model.close();
+			_data->_model = _data->_modelOri;
+		}
+
+	}
+
+#endif
+
+	file.close();
+	logFile.close();
+	return true;
+}
+
+bool MJfdDataImportorImpl::importIn(){
 	/*
 	 * 3) 导入总控数据
 	 */
@@ -463,8 +542,7 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 	qDebug() << "GRAV:" << _data->_blockNum[GRAV];
 
 
-	MExtensionManager extManager = MExtensionManager::getManager();
-	MSharedVariablesManager sharedVariables = extManager.createExtension(
+	MSharedVariablesManager sharedVariables = _data->_extManager.createExtension(
 			"org.sipesc.utilities.MSharedVariablesManager");
 	Q_ASSERT(!sharedVariables.isNull());
 	sharedVariables.initialize(_data->_model);
@@ -570,7 +648,7 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 
 	if (mpc.getDataCount() > 0)
 	{
-		MTaskManager mpcTask = extManager.createExtension("org.sipesc.fems.coupledeqs.MCoupledEqsPreprocessorManager");
+		MTaskManager mpcTask = _data->_extManager.createExtension("org.sipesc.fems.coupledeqs.MCoupledEqsPreprocessorManager");
 		Q_ASSERT(!mpcTask.isNull());
 		ok = mpcTask.initialize(_data->_model);
 		if (!ok)
@@ -584,8 +662,7 @@ bool MJfdDataImportorImpl::import(const QString& fileName)
 		mpcTask.start();
 	}
 
-	file.close();
-	logFile.close();
+
 	return true;
 }
 

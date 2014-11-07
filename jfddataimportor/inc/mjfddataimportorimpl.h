@@ -38,6 +38,10 @@ public:
 	bool import(const QString& fileName);
 
 private:
+	bool importIn();
+	bool initDatabase(MDataModel& model);
+
+private:
   class Data;
   std::auto_ptr<Data> _data;
 

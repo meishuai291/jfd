@@ -45,10 +45,15 @@ public:
 	void checkout();
 
 private:
+	void parseAnalysisType(const QString& );
+	bool solveIn(const QString&);
+
+private:
 	MExtensionManager _extManager;
 	MObjectManager _objectManager;
 	MDatabase _db;
 	MDataModel _model;
+	MDataModel _modelOri;
 	QVector<QString> _taskCommands;
 	QString _dbPath;
 	QString _logFile;

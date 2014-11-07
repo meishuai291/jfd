@@ -66,7 +66,7 @@ public:
 	bool _isRepeated;
 	bool _isInitialized;
 
-	MDataModel _model, _elementPath;
+	MDataModel _model, _modelOri, _elementPath;
 	MDataManager _LcaseManager, _EleGroupManager;
 	MDataManager _proManager, _geoManager;
 
@@ -77,7 +77,8 @@ public:
 	QString RodEleMsg(int Nele, int gid);
 	QString ShellEleMsg(int Nele, int gid);
 
-	bool ControllingInfoOutput(QTextStream* stream, QString fileName);
+	void SolverInfoOutput(QTextStream* stream, QString fileName);
+	bool ControllingInfoOutput(QTextStream* stream);
 	bool NodeInfoOutput(QTextStream* stream);
 	bool ElementInfoOutput(QTextStream* stream);
 	bool SolidElementInfoOutput(QTextStream* stream,int);
@@ -86,8 +87,9 @@ public:
 	bool SolidEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
 	bool RodEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
 	bool ShellEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
-	bool StaticResultsOutput(QTextStream* stream);
 
+	bool ResultsOutput(QTextStream* stream);
+	bool StaticResultsOutput(QTextStream* stream);
 	bool DynamicResultsOutput(QTextStream* stream);
 };
 
@@ -119,6 +121,7 @@ MBltResultHeaderExportorImpl::MBltResultHeaderExportorImpl() {
 }
 
 MBltResultHeaderExportorImpl::~MBltResultHeaderExportorImpl() {
+	_data->_modelOri = MExtension();
 }
 
 bool MBltResultHeaderExportorImpl::initialize(MDataModel& model,
@@ -126,6 +129,7 @@ bool MBltResultHeaderExportorImpl::initialize(MDataModel& model,
 	if (_data->_isInitialized)
 		return false; //不能重复初始化
 	_data->_model = model;
+	_data->_modelOri = model;
 	bool isOk;
 
 	MDataModel proModel = _data->_dbManager.createDataModel();
@@ -171,27 +175,76 @@ bool MBltResultHeaderExportorImpl::dataExport(QTextStream* stream,
 	 *   EQUATION NUMBERS
 	 *   C O N S T R A I N T   E Q U A T I O N S   D A T A
 	 */
-	_data->ControllingInfoOutput(stream, fileName);
-	_data->NodeInfoOutput(stream);
-	_data->ElementInfoOutput(stream);
+	bool isOk;
+	_data->SolverInfoOutput(stream, fileName);
 
-	MSharedVariablesManager sharedVariables = _data->_extManager.createExtension(
-			"org.sipesc.utilities.MSharedVariablesManager");
-	Q_ASSERT(!sharedVariables.isNull());
-	sharedVariables.initialize(_data->_model);
+	isOk = _data->NodeInfoOutput(stream);
+	if(!isOk){
+		return false;
+	}
+	isOk = _data->ElementInfoOutput(stream);
+	if(!isOk){
+		return false;
+	}
 
-	QString analysis = sharedVariables.getVariable(
-			_data->_femsGlobal.getValue(MFemsGlobal::AnalysisType)).toString();
+	isOk = _data->ResultsOutput(stream);
+	if(!isOk){
+		return false;
+	}
 
-	if(analysis == _data->_femsGlobal.getValue(MFemsGlobal::Static))
-		_data->StaticResultsOutput(stream);
-	else
-		_data->DynamicResultsOutput(stream);
+
+#ifndef MULTIPLE_ANALYSIS
+	qDebug() << "------------------------------------- MULTIPLE_ANALYSIS";
+
+	if(_data->_model.exists("SecondAnalysisPath",MDatabaseGlobal::ModelType)){
+		MDataModel modelAnother = _data->_dbManager.createDataModel();
+		bool ok = modelAnother.open(_data->_model, "SecondAnalysisPath");
+		if (!ok){
+			QString errorMessage = "can't open SecondAnalysisPath DataModel"
+			  "                 in MBltResultHeaderExportorImpl::initialize";
+			_data->_monitor.setMessage(errorMessage);
+			return false;
+		}
+		_data->_model = modelAnother;
+	}
+	isOk = _data->ResultsOutput(stream);
+	if(!isOk){
+		return false;
+	}
+
+	_data->_model.close();
+	_data->_model = _data->_modelOri;
+#endif
+
 	return true;
 }
+bool MBltResultHeaderExportorImpl::Data::ResultsOutput(QTextStream* stream){
+	bool isOk;
+	MSharedVariablesManager sharedVariables = _extManager.createExtension(
+			"org.sipesc.utilities.MSharedVariablesManager");
+	Q_ASSERT(!sharedVariables.isNull());
+	sharedVariables.initialize(_model);
 
+	QString analysis = sharedVariables.getVariable(
+			_femsGlobal.getValue(MFemsGlobal::AnalysisType)).toString();
+
+	if(analysis == _femsGlobal.getValue(MFemsGlobal::Static)){
+		isOk = StaticResultsOutput(stream);
+		if(!isOk){
+			return false;
+		}
+	}else{
+		isOk = DynamicResultsOutput(stream);
+		if(!isOk){
+			return false;
+		}
+	}
+
+	return true;
+}
 //*************************写入总控信息*************************//
-bool MBltResultHeaderExportorImpl::Data::ControllingInfoOutput(QTextStream* stream, QString fileName) {
+
+void MBltResultHeaderExportorImpl::Data::SolverInfoOutput(QTextStream* stream, QString fileName) {
 
 	QDate d = QDate::currentDate();
 	(*stream) << QString("\n         欢迎使用《开放式结构有限元分析系统SiPESC.FEMS》\n");
@@ -204,6 +257,9 @@ bool MBltResultHeaderExportorImpl::Data::ControllingInfoOutput(QTextStream* stre
 	(*stream) << QString("         输出文件 ： ") << fileName << "\n";
 	(*stream) << "\n\n\n";
 
+}
+
+bool MBltResultHeaderExportorImpl::Data::ControllingInfoOutput(QTextStream* stream) {
 
 	bool isOk(false);
 	int Nmode = 0;	//模态阶数
@@ -218,6 +274,7 @@ bool MBltResultHeaderExportorImpl::Data::ControllingInfoOutput(QTextStream* stre
 	isOk = _LcaseManager.open(_model, "LoadCase",true);
 	int Nste = _LcaseManager.getDataCount();  //时间步数
 
+	(*stream) << "\n\n";
 	(*stream) << "     NUMBER OF MODE SHAPES TO BE PRINTED. . . . . .(NMODE) ="
 			<< BltForamt::blank(Nmode, 5) << "\n";
 	(*stream) << "     NUMBER OF TIME STEPS IN FIRST SOLUTION BLOCK (NSTE)   ="
@@ -228,6 +285,7 @@ bool MBltResultHeaderExportorImpl::Data::ControllingInfoOutput(QTextStream* stre
 			<< BltForamt::blank(Neig, 5) << "\n";
 	(*stream) << "\n\n\n\n\n\n";
 	return true;
+
 }
 
 //*************************节点数据输出*************************//
@@ -596,6 +654,9 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 
 	bool isOk;
 
+	isOk = ControllingInfoOutput(stream);
+	Q_ASSERT(isOk);
+
 	MDataModel DisPathModel = _dbManager.createDataModel();
 	isOk = DisPathModel.open(_model, "DisplacementPath");
 	Q_ASSERT(isOk);
@@ -948,6 +1009,9 @@ bool MBltResultHeaderExportorImpl::Data::ShellEleStress(QTextStream* stream, MPr
 bool MBltResultHeaderExportorImpl::Data::DynamicResultsOutput(QTextStream* stream) {
 
 	bool isOk;
+
+	isOk = ControllingInfoOutput(stream);
+	Q_ASSERT(isOk);
 
 	MDataManager evManager = _dbManager.createDataManager();
 	isOk = evManager.open(_model, _femsGlobal.getValue(MFemsGlobal::EigenValues), true);
