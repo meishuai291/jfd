@@ -36,7 +36,7 @@ public:
 
 	void import(const QString&);
 
-	bool solve(const QString&);
+	bool solve(const QString&, QString type = QString());
 
 	void output(const QString&);
 

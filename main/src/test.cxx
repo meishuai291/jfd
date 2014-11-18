@@ -92,6 +92,15 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 		std::cout << ok << " - " << i+1 << " - " << apList[i].toStdString() << std::endl;
 	}
 
+	// 隐式
+	QStringList apList2;
+	apList2 << "org.sipesc.fems.lequations";
+	apList2 << "org.sipesc.fems.sparsematrix";
+	for (int i = 0; i < apList2.count(); i++){
+		ok = pluginManager.loadPlugin(apList2[i]);
+		qDebug() << ok << " - " << i+1 << " - " << apList2[i];
+	}
+
 	QDir::setCurrent(workSpace); //设置工作目录为给定目录
 
 	//创建数据库管理器
@@ -232,8 +241,14 @@ void Test::parseAnalysisType(const QString& type){
 
 }
 
-bool Test::solve(const QString& importName)
+bool Test::solve(const QString& importName, QString type)
 {
+	MSharedVariablesManager sharedVariables = _extManager.createExtension(
+			"org.sipesc.utilities.MSharedVariablesManager");
+	Q_ASSERT(!sharedVariables.isNull());
+	sharedVariables.initialize(_model);
+	sharedVariables.setVariable("SolveType",type);
+
 	QString fileName = importName;
 	QFileInfo fi(fileName);
 	QString suffix = fi.suffix();

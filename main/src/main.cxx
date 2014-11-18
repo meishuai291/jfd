@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
 
 	QString blt = inputComdsMap["-g"]; //BLT 几何文件
 	QString jfd = inputComdsMap["-i"]; //JFD 模型文件
+	QString solverType = inputComdsMap["-s"];
 	QFileInfo fi(blt);
 	QString out = fi.absolutePath() + '/' + fi.completeBaseName() + ".out";
 	QString workSpace = fi.absolutePath();
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
 
 		mainTest.import(jfd);
 
-		mainTest.solve(jfd);
+		mainTest.solve(jfd,solverType);
 		
 		// 若模型文件为 jfd 则输出 out。
 		if(type.compare("jfd",Qt::CaseInsensitive) == 0){
@@ -85,14 +86,21 @@ void parseCommands(QStringList commands)
 	{
 		printUsage();
 		exit(0);
-	}
-	else
-	{
+	}else{
 		if (!commands.contains("-g"))
 			return;
 		if (!commands.contains("-i"))
 			return;
 	}
+
+	if (commands.contains("-s"))
+	{
+		inputComdsMap.insert("-s", "Pardiso");
+		commands.removeOne("-s");
+	}else{
+		inputComdsMap.insert("-s", QString());
+	}
+
 
 	int count = commands.count(); //命令个数
 	for (int i = 1; i < count; i = i + 2)

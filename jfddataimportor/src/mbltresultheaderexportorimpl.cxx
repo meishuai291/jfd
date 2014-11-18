@@ -714,19 +714,19 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 
 		//****************************单元应力*********************************//
 		MDataModel EleStressPathModel = _dbManager.createDataModel();
-		isOk = EleStressPathModel.open(_model, "EleNodeStressPath");
+		isOk = EleStressPathModel.open(_model, "EleNodeStressPath",true);
 		Q_ASSERT(isOk);
 		MDataModel EleStressModel = _dbManager.createDataModel();
 
-		isOk = EleStressModel.open(EleStressPathModel, QString::number(TimeStep));
+		isOk = EleStressModel.open(EleStressPathModel, QString::number(TimeStep),true);
 		Q_ASSERT(isOk);
 		MDataManager EleStressManager = _dbManager.createDataManager();
 
 		MDataModel EleStressPathModel1 = _dbManager.createDataModel();
-		isOk = EleStressPathModel1.open(_model, "IntegralStressPath");
+		isOk = EleStressPathModel1.open(_model, "IntegralStressPath",true);
 		Q_ASSERT(isOk);
 		MDataModel EleStressModel1 = _dbManager.createDataModel();
-		isOk = EleStressModel1.open(EleStressPathModel1, QString::number(TimeStep));
+		isOk = EleStressModel1.open(EleStressPathModel1, QString::number(TimeStep),true);
 		Q_ASSERT(isOk);
 		MDataManager EleStressManager1 = _dbManager.createDataManager();
 
@@ -735,9 +735,9 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 			MPropertyData eleGroup = _EleGroupManager.getDataAt(i);
 			int gId = eleGroup.getId();
 			QString type = eleGroup.getType();
-			bool ok = EleStressManager.open(EleStressModel,type);
+			bool ok = EleStressManager.open(EleStressModel,type,true);
 			Q_ASSERT(ok);
-			ok = EleStressManager1.open(EleStressModel1,type);
+			ok = EleStressManager1.open(EleStressModel1,type,true);
 			Q_ASSERT(ok);
 
 			/** 应力输出与单元类型有关，先测试实体单元 **/
@@ -814,12 +814,16 @@ bool MBltResultHeaderExportorImpl::Data::SolidEleStress(QTextStream* stream, MPr
 		for (int j = 0; j < Elecount; j++) {
 			QString sEid = BltForamt::blank(j + 1, 8) + "\n";
 			MDataObjectList eleStressData1 = EleStressManager.getData(eleGroup.getValue(j).toInt());
-
+			Q_ASSERT(!eleStressData1.isNull());
+			if(eleStressData1.isNull()){
+				continue;
+			}
 			QString ss;
 			MVector stress1V = _vFactory.createVector();
 
 			for (int n = 0; n < 8; n++) {
 				MVectorData stress1 = eleStressData1.getDataAt(n);
+				Q_ASSERT(!stress1.isNull());
 				stress1V << stress1;
 
 				ss = ss + BltForamt::blank(n + 1, 17) + QString("          ");
