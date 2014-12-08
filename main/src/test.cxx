@@ -77,20 +77,16 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 
 	bool ok;
 	QStringList apList;
-
-//	ok = pluginManager.loadAllPlugins();
-//	if(!ok){
-//		std::cout << "Failed to load All Plugins." << std::endl;
-//	}
-//  apList = pluginManager.getLoadedPluginList();
-//  apList = pluginManager.getAvailablePluginList();
-	apList << "org.sipesc.fems.addplugin";
-	apList << "org.sipesc.fems.bltdataprocess";
-	apList << "org.sipesc.fems.hexabrickelement12";
+    apList = pluginManager.getAvailablePluginList();
+//	apList << "org.sipesc.fems.addplugin";
+//	apList << "org.sipesc.fems.bltdataprocess";
+//	apList << "org.sipesc.fems.hexabrickelement12";
 	for (int i = 0; i < apList.count(); i++){
 		ok = pluginManager.loadPlugin(apList[i]);
-		std::cout << ok << " - " << i+1 << " - " << apList[i].toStdString() << std::endl;
+		if(!ok)
+			std::cout << apList[i].toStdString() << " Load Failed." << std::endl;
 	}
+	std::cout << "All Plugins have Loaded." << std::endl;
 
 	// 隐式
 	QStringList apList2;
@@ -239,6 +235,43 @@ void Test::parseAnalysisType(const QString& type){
 		_taskCommands.erase(vi-1);
 	}
 
+	#if 0
+	QVector<QString> cmds;
+	cmds << "org.sipesc.fems.femstask.MNodeMapManager";
+	cmds << "org.sipesc.fems.femstask.MNodeSortByRAD";
+	cmds << "org.sipesc.fems.controlmatrix.MDofStandardParserManager";
+	cmds << "org.sipesc.fems.controlmatrix.MDofNumberingStandardManager";
+	cmds << "org.sipesc.fems.controlmatrix.MNodeControlMatrixStandardManager";
+	cmds << "org.sipesc.fems.controlmatrix.MElementLocalCoordTransStandardManager";
+	cmds << "org.sipesc.fems.controlmatrix.MElementControlMatrixStandardManager";
+	cmds << "org.sipesc.fems.femstask.MElementMassManager";
+	cmds << "org.sipesc.fems.inistrainanalysis.MInitStrainAnalysisManager";
+	cmds << "org.sipesc.fems.femstask.MDisplacementsManager";
+	cmds << "org.sipesc.fems.stress.MSolidNodeStressManager";
+	cmds << "org.sipesc.fems.jfxexport.MJifexUnvExportor";
+	_taskCommands = cmds;
+	#endif
+
+	#if 0
+	QVector<QString> cmd;
+	cmd << "org.sipesc.fems.femstask.MNodeMapManager";
+	cmd << "org.sipesc.fems.femstask.MNodeSortBySpectrum";
+	cmd << "org.sipesc.fems.controlmatrix.MDofStandardParserManager";
+	cmd << "org.sipesc.fems.controlmatrix.MDofNumberingStandardManager";
+	cmd << "org.sipesc.fems.controlmatrix.MNodeControlMatrixStandardManager";
+	cmd << "org.sipesc.fems.controlmatrix.MElementLocalCoordTransStandardManager";
+	cmd << "org.sipesc.fems.controlmatrix.MElementControlMatrixStandardManager";
+	cmd << "org.sipesc.fems.femstask.MSolidElementStiffManager";
+	cmd << "org.sipesc.fems.femstask.MElementMassManager";
+	cmd << "org.sipesc.fems.femstask.MGivenValueLoadVectorManager";
+	cmd << "org.sipesc.fems.femstask.MLoadComponentManager";
+	cmd << "org.sipesc.fems.femstask.MLoadManager";
+	cmd << "org.sipesc.fems.femstask.MResultsManager";
+	cmd << "org.sipesc.fems.femstask.MDisplacementsManager";
+//	cmd << "org.sipesc.fems.jfxexport.MJifexUnvDispExportor";
+	_taskCommands = cmd;
+	#endif
+
 }
 
 bool Test::solve(const QString& importName, QString type)
@@ -279,10 +312,10 @@ bool Test::solve(const QString& importName, QString type)
 		bool isOk = solveIn(fileBaseName);
 		if(!isOk)
 			return false;
+		_model.close();
+		_model = _modelOri;
 	}
 
-	_model.close();
-	_model = _modelOri;
 #endif
 
 	return true;

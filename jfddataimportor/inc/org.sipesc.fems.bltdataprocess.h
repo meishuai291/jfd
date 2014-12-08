@@ -44,6 +44,8 @@ class OrgSipescFemsBltdataprocessPlugin:public MPluginObject
     MExtensionObject* createOrgSipescFemsJfdimportMTABLED5Parser();
     MExtensionObject* createOrgSipescFemsJfdimportMJfdShellElementHandlerFactory();
     MExtensionObject* createOrgSipescFemsJfdimportMJfdShellElementHandler();
+    MExtensionObject* createOrgSipescFemsJfdimportMJfdBeamElementHandlerFactory();
+    MExtensionObject* createOrgSipescFemsJfdimportMJfdBeamElementHandler();
     MExtensionObject* createOrgSipescFemsBltexportMBltDataExportor();
   private:
     bool _running;

@@ -42,6 +42,9 @@ using namespace org::sipesc::fems::global;
 using namespace org::sipesc::utilities;
 using namespace org::sipesc::fems::jfdimport;
 
+#define jdflineEle 1
+
+
 enum JFD
 {
 	NODE, MPC, LINEELEMENT, NLINEELEMENT, FORCE, GRAV
@@ -114,7 +117,9 @@ public:
 		_blockNum[NODE] = line.mid(0, 6).toInt(); // |0~5|:节点总数
 		_blockNum[LINEELEMENT] = line.mid(12, 4).toInt(); //|12~15|:线性单元组总数
 		_blockNum[NLINEELEMENT] = line.mid(16, 4).toInt(); //|16~19|:非线性单元组总数
-
+		#if jdflineEle
+			_blockNum[LINEELEMENT] += _blockNum[NLINEELEMENT];
+		#endif
 		/*
 		 * 第2行
 		 * [2]:空行
@@ -599,6 +604,7 @@ bool MJfdDataImportorImpl::importIn(){
 				_data->_blockNum[LINEELEMENT]);
 	}
 
+	#if !jdflineEle
 	{
 		QString key = "NLINEELEMENT";
 		MExtensionFactory factory = _data->_extFactoryManager.getFactory(key);
@@ -610,6 +616,7 @@ bool MJfdDataImportorImpl::importIn(){
 		handler.handleEntry(&_data->_stream, &_data->_logStream,
 				_data->_blockNum[NLINEELEMENT]);
 	}
+	#endif
 
 	{
 		QString key = "FORCE";

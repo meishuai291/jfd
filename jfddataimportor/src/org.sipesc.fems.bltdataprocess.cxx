@@ -24,6 +24,9 @@
 //
 #include <mjfdshellelementhandlerfactoryimpl.h>
 #include <mjfdshellelementhandlerimpl.h>
+#include <mjfdbeamelementhandlerimpl.h>
+#include <mjfdbeamelementhandlerfactoryimpl.h>
+
 
 //
 #include <mbltdataexportorimpl.h>
@@ -68,9 +71,13 @@ getRequiredFeatures() const
   {
 	  QStringList result;
 	  result.append(QLatin1String("org.sipesc.utilities"));
+	  result.append(QLatin1String("org.sipesc.core.utility"));
+	  result.append(QLatin1String("org.sipesc.core.engdbs.data"));
+	  result.append(QLatin1String("org.sipesc.fems.data"));
+	  result.append(QLatin1String("org.sipesc.fems.matrix"));
 	  result.append(QLatin1String("org.sipesc.fems.bdfimport"));
-	  result.append(QLatin1String("org.sipesc.fems.jfxexport"));
 	  result.append(QLatin1String("org.sipesc.fems.femsutils"));
+	  result.append(QLatin1String("org.sipesc.fems.global"));
 	  return result;
   }
 
@@ -178,6 +185,16 @@ MExtensionObject* OrgSipescFemsBltdataprocessPlugin
 ::createOrgSipescFemsJfdimportMJfdShellElementHandler()
   {
   return new MJfdShellElementHandlerImpl;
+  }
+MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+::createOrgSipescFemsJfdimportMJfdBeamElementHandlerFactory()
+  {
+  return new MJfdBeamElementHandlerFactoryImpl;
+  }
+MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+::createOrgSipescFemsJfdimportMJfdBeamElementHandler()
+  {
+  return new MJfdBeamElementHandlerImpl;
   }
 MExtensionObject* OrgSipescFemsBltdataprocessPlugin
 ::createOrgSipescFemsBltexportMBltDataExportor()

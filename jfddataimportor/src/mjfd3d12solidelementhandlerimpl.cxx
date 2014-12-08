@@ -432,12 +432,13 @@ bool MJfd3DSolidElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream
 	MPropertyData elesGroupData = factory.createObject();
 	Q_ASSERT(!elesGroupData.isNull());
 
+	eleGroupId = _data->_eleGroup.getDataCount()+1;
 	elesGroupData.setType("HexaBrick12Element");
 	elesGroupData.setId(eleGroupId);
-	elesGroupData.setValueCount(ecnt);
-
+	elesGroupData.setValueCount(ecnt+1);
+	elesGroupData.setValue(0,0);
 	for (int i = 0; i < ecnt; i++)
-		elesGroupData.setValue(i,eles[i]);	//eles[i]代表第i个单元的数据吗？上边没有定义，也没有存入啊
+		elesGroupData.setValue(i+1,eles[i]);	//eles[i]代表第i个单元的数据吗？上边没有定义，也没有存入啊
 
 	_data->_eleGroup.appendData(elesGroupData);
 

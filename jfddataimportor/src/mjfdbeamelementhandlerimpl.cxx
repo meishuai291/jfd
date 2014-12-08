@@ -1,11 +1,11 @@
 /*
- * mjfdcrodelementhandlerimpl.cxx
+ * mjfdbeamelementhandlerimpl.cxx
  *
- *  Created on: 2013-1-21
- *      Author: cyz
+ *  Created on: 2014年12月1日
+ *      Author: sipesc
  */
 
-#include <mjfdcrodelementhandlerimpl.h>
+#include <mjfdbeamelementhandlerimpl.h>
 
 #include <qdebug.h>
 #include <mobjectmanager.h>
@@ -21,18 +21,22 @@
 #include <org.sipesc.fems.data.mpropertydata.h>
 #include <org.sipesc.fems.data.mpropertyrefdata.h>
 #include <org.sipesc.fems.data.melementdata.h>
+#include <org.sipesc.fems.data.mnodedata.h>
 
 using namespace org::sipesc::core::utility;
 using namespace org::sipesc::core::engdbs::data;
 using namespace org::sipesc::fems::global;
 using namespace org::sipesc::fems::data;
 
+#include <org.sipesc.fems.matrix.mvectorfactory.h>
+#include <org.sipesc.fems.matrix.mvectordata.h>
+#include <org.sipesc.fems.matrix.mvector.h>
 #include <org.sipesc.fems.matrix.mmatrixfactory.h>
 #include <org.sipesc.fems.matrix.mmatrixdata.h>
 #include <org.sipesc.fems.matrix.mmatrix.h>
 using namespace org::sipesc::fems::matrix;
 
-class MJfdCrodElementHandlerImpl::Data
+class MJfdBeamElementHandlerImpl::Data
 {
 public:
 	Data()
@@ -51,6 +55,7 @@ public:
 	MDatabaseManager _baseManager;
 	MDataFactoryManager _factoryManager;
 	MMatrixFactory _mFactory;
+	MVectorFactory _vFactory;
 
 	MDataModel _model;
 
@@ -58,14 +63,15 @@ public:
 	QTextStream *_logStream; //log文件数据流
 
 	MDataModel _elementPath;
-	MDataManager _rodManager;
+	MDataManager _beamManager;
 
 	MDataManager _material;
 
 	MDataModel _propertyRefPath;
 	MDataManager _general;
-	MDataManager _geometry;
+	MDataManager _geometry,_varGeos,_geoReferManager;
 	MDataManager _eleGroup;//单元组数据
+	MDataManager _node;
 
 	QString _readLine() //读取一行，并显示状态，以及log写入
 	{
@@ -88,26 +94,30 @@ public:
 	bool _isInitialized;
 };
 
-MJfdCrodElementHandlerImpl::MJfdCrodElementHandlerImpl()
+MJfdBeamElementHandlerImpl::MJfdBeamElementHandlerImpl()
 {
-	_data.reset(new MJfdCrodElementHandlerImpl::Data);
+	_data.reset(new MJfdBeamElementHandlerImpl::Data);
 
 	if (!_data.get())
-		mReportError(M_ERROR_FATAL, "MJfdCrodElementHandlerImpl::"
-				"MJfdCrodElementHandlerImpl() ****** failed");
+		mReportError(M_ERROR_FATAL, "MJfdBeamElementHandlerImpl::"
+				"MJfdBeamElementHandlerImpl() ****** failed");
 
 	_data->_objManager = MObjectManager::getManager();
 	UtilityManager util = _data->_objManager.getObject("org.sipesc.core.utility.utilitymanager");
 	Q_ASSERT(!util.isNull());
-	_data->_monitor = util.createProgressMonitor("MJfdCrodElementHandler", ProgressMonitor());
+	_data->_monitor = util.createProgressMonitor("MJfdBeamElementHandler", ProgressMonitor());
 	Q_ASSERT(!_data->_monitor.isNull());
+
+	_data->_vFactory = _data->_objManager.getObject(
+				"org.sipesc.fems.matrix.vectorfactory");
+	Q_ASSERT(!_data->_vFactory.isNull());
 }
 
-MJfdCrodElementHandlerImpl::~MJfdCrodElementHandlerImpl()
+MJfdBeamElementHandlerImpl::~MJfdBeamElementHandlerImpl()
 {
 }
 
-bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
+bool MJfdBeamElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 {
 	if (_data->_isInitialized)
 		return false;
@@ -130,18 +140,18 @@ bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 	if (!ok)
 	{
 		QString errorMessage = "can't open MFEMS::ElementPath DataModel "
-				" in MJfdCrodElementHandlerImpl::initialize() ";
+				" in MJfdBeamElementHandlerImpl::initialize() ";
 		qDebug() << errorMessage;
 		_data->_monitor.setMessage(errorMessage);
 		return false;
 	}
 
-	_data->_rodManager = _data->_baseManager.createDataManager();
-	ok = _data->_rodManager.open(_data->_elementPath, _data->_elesGlobal.getValue(MElementsGlobal::BarElement));
+	_data->_beamManager = _data->_baseManager.createDataManager();
+	ok = _data->_beamManager.open(_data->_elementPath, _data->_elesGlobal.getValue(MElementsGlobal::BeamElement));
 	if (!ok)
 	{
-		QString errorMessage = "can't open MELEMENTS::BarElement DataManager "
-				"   in MJfdCrodElementHandlerImpl::initialize() ";
+		QString errorMessage = "can't open MELEMENTS::BeamElement DataManager "
+				"   in MJfdBeamElementHandlerImpl::initialize() ";
 		qDebug() << errorMessage;
 		_data->_monitor.setMessage(errorMessage);
 		return false;
@@ -152,7 +162,7 @@ bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 	if (!ok)
 	{
 		QString errorMessage = "can't open MFEMS::Material DataManager "
-				" in MJfdCrodElementHandlerImpl::initialize() ";
+				" in MJfdBeamElementHandlerImpl::initialize() ";
 		qDebug() << errorMessage;
 		_data->_monitor.setMessage(errorMessage);
 		return false;
@@ -163,7 +173,7 @@ bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 	if (!ok)
 	{
 		QString errorMessage = "can't open MFEMS::PropertyRefPath DataModel "
-				"in MJfdCrodElementHandlerImpl::initialize() ";
+				"in MJfdBeamElementHandlerImpl::initialize() ";
 		qDebug() << errorMessage;
 		_data->_monitor.setMessage(errorMessage);
 		return false;
@@ -174,7 +184,7 @@ bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 	if (!ok)
 	{
 		QString errorMessage = "can't open MFEMS::GeneralRef DataManager "
-				" in MJfdCrodElementHandlerImpl::initialize() ";
+				" in MJfdBeamElementHandlerImpl::initialize() ";
 		qDebug() << errorMessage;
 		_data->_monitor.setMessage(errorMessage);
 		return false;
@@ -185,7 +195,29 @@ bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 	if (!ok)
 	{
 		QString errorMessage = "can't open MFEMS::Geometry DataManager "
-			" in MJfdCrodElementHandlerImpl::initialize() ";
+			" in MJfdBeamElementHandlerImpl::initialize() ";
+		qDebug() << errorMessage;
+		_data->_monitor.setMessage(errorMessage);
+		return false;
+	}
+
+	_data->_varGeos = _data->_baseManager.createDataManager();
+	ok = _data->_varGeos.open(_data->_model,
+		  _data->_femsGlobal.getValue(MFemsGlobal::VariGeometry));
+	if (!ok)
+	{
+		QString errorMessage = "can't open Variable Geometry DataManager "
+			" in MJfdBeamElementHandlerImpl::initialize() ";
+		qDebug() << errorMessage;
+		_data->_monitor.setMessage(errorMessage);
+		return false;
+	}
+
+	_data->_geoReferManager = _data->_baseManager.createDataManager();
+	ok = _data->_geoReferManager.open(_data->_model, _data->_femsGlobal.getValue(MFemsGlobal::GeoOffsetRefer));
+	if (!ok) {
+		QString errorMessage = "can't open GeoOffsetRefer DataManager"
+				" in  MJfdBeamElementHandlerImpl::initialize()";
 		qDebug() << errorMessage;
 		_data->_monitor.setMessage(errorMessage);
 		return false;
@@ -196,7 +228,18 @@ bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 	if (!ok)
 	{
 		QString errorMessage = "can't open EleGroup DataManager "
-				" in MJfdCrodElementHandlerImpl::initialize() ";
+				" in MJfdBeamElementHandlerImpl::initialize() ";
+		qDebug() << errorMessage;
+		_data->_monitor.setMessage(errorMessage);
+		return false;
+	}
+
+	_data->_node = _data->_baseManager.createDataManager();
+	ok = _data->_node.open(_data->_model, _data->_femsGlobal.getValue(MFemsGlobal::Node),true);
+	if (!ok)
+	{
+		QString errorMessage = "can't open Node DataManager "
+				" in MJfdBeamElementHandlerImpl::initialize() ";
 		qDebug() << errorMessage;
 		_data->_monitor.setMessage(errorMessage);
 		return false;
@@ -206,48 +249,55 @@ bool MJfdCrodElementHandlerImpl::initialize(MDataModel& model, bool isRepeated)
 	return true;
 }
 
-ProgressMonitor MJfdCrodElementHandlerImpl::getProgressMonitor() const
+ProgressMonitor MJfdBeamElementHandlerImpl::getProgressMonitor() const
 {
 	return _data->_monitor;
 }
 /*
-   1   1   2       0                           0   0       1   1
-    11.6820e-038.0020e+00
-2.0000e+08
-    1    0    1    1    00.00321596
- 14809 14810
+----------------
+   4   3   0    0   1                           0           1   1                  线性单元组 8(7组线性梁单元组非桥面系（1 单元1端系梁)单元数:3)
+    13.4500e+07     0.2002.6504e+00
+3.2958e+011.8667e+011.4292e+011.4000e+01     0.000     0.000
+    1  470  605  604    1    1
+    2  605  606  604    1    1
+    3  606  519  604    1    1
+---------------
 
  [1]
  *  |0~3|     :本组单元类型标志
  *  |4~7|     :本组单元总数
- *  |56~59|:本组材料类型标志
- *  |60~63|:本组材料类型总数
+ *  |8~11|    :非线性分析类型标志
+ *  |56~59|   :本组材料类型标志
+ *  |60~63|   :本组材料类型总数
 
  [2]
  *  |0~4|      :材料号
- *  |5~14|   :横截面积
- *  |15~24|:该材料密度
+ *  |5~14|     :杨式模量
+ *  |15~24|    :泊松比
+ *  |25~34|    :该材料密度
 
- [3]
- *  |0~9|     :杨式模量
-
- ......其他材料
+ [3] 截面
+ *  |0~9|     :r轴
+ *  |10~19|   :s轴
+ *  |20~29|   :t轴
+ *  |30~39|   :截面积
+ *  |40~49|   :s方向有效剪切面积
+ *  |50~59|   :t方向有效剪切面积
 
  [4]
  *  |0~4|     :单元号
- *  |15~19|:材料号
+ *  |5~9|     :节点号
+ *  |10~14|   :节点号
+ *  |15~19|   :局部坐标辅助节点
+ *  |20~24|   :材料
 
- [5]
- *  |0~5|     :node1
- *  |6~11|  :node2
- */
 /*
  		QVector<QVariant> value;
 		value.append(nEle);//本组单元数
 		value.append(matType);//本组材料类型
 		value.append(nMat);//本组材料种类数
  */
-bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* logStream, const QVector<QVariant>& value)
+bool MJfdBeamElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* logStream, const QVector<QVariant>& value)
 {
 	Q_ASSERT(_data->_isInitialized);
 
@@ -267,15 +317,19 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 
 	//先处理材料
 	/*
-       [2]
-       *  |0~4|      :材料号
-       *  |5~14|   :横截面积
-       *  |15~24|:该材料密度
+	 [2]
+	 *  |0~4|      :材料号
+	 *  |5~14|     :杨式模量
+	 *  |15~24|    :泊松比
+	 *  |25~34|    :该材料密度
 
-       [3]
-       *  |0~9|     :杨式模量
-
-	 ......其他材料
+	 [3] 截面
+	 *  |0~9|     :r轴
+	 *  |10~19|   :s轴
+	 *  |20~29|   :t轴
+	 *  |30~39|   :截面积
+	 *  |40~49|   :s方向有效剪切面积
+	 *  |50~59|   :t方向有效剪切面积
 	 */
 	int matCount = _data->_material.getDataCount();//现有材料数据个数
 
@@ -284,11 +338,16 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 		QString line = _data->_readLine();
 		//默认，每组材料号严格按照1～nMat 排列
 		int matId = matCount + line.mid(0,5).toInt();// |0~4|   :材料号
-		double A = line.mid(5,10).toDouble();//|5~14|  :横截面积
-		double DENS = line.mid(15,10).toDouble();//|5~14|:该材料密度
+		int secId = matId;
+		double E = line.mid(5,10).toDouble();// |5~14|     :杨式模量
+		double pois = line.mid(15,10).toDouble();// |15~24|    :泊松比
+		double DENS = line.mid(25,10).toDouble();//|25~34|	:该材料密度
 
 		line = _data->_readLine();
-		double E = line.mid(0,10).toDouble();//|0~9|     :杨式模量
+		double rMoment = line.mid(0,10).toDouble();
+		double sMoment = line.mid(10,10).toDouble();
+		double tMoment = line.mid(20,10).toDouble();
+		double A = line.mid(30,10).toDouble();
 
 		QString dataType = "org.sipesc.fems.data.propertydata";
 		MDataFactory factory = _data->_factoryManager.getFactory(dataType);
@@ -300,105 +359,58 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 		matData.setValueCount(3); //材料value个数
 		matData.setValue(0, DENS);
 		matData.setValue(1, E);
-
+		matData.setValue(2, pois);
 		_data->_material.appendData(matData);
 
 		MPropertyData geometryData = factory.createObject();
 		geometryData.setId(matId); //设置几何性质Id
 		geometryData.setType(_data->_elesGlobal.getValue(MElementsGlobal::GeoConst)); //设置几何性质类型为：常实数
-		geometryData.setValueCount(1); //设置value值个数为：1 ，截面积
-		geometryData.setValue(0, A); //截面积
+		geometryData.setValueCount(1); // 设置value值个数为：1 ，截面Id
+		geometryData.setValue(0, secId); // 截面Id
 		_data->_geometry.appendData(geometryData);
+
+		MPropertyData variGeoData = factory.createObject();
+		variGeoData.setId(secId);
+		QString cross = "PBAR";
+		variGeoData.setType(cross);
+		variGeoData.setValueCount(7);//7
+		variGeoData.setValue(0, QVariant(A));		// 截面积
+		variGeoData.setValue(1, QVariant(tMoment));	//I1 Izz t
+		variGeoData.setValue(2, QVariant(sMoment));	//I2 Iyy s
+		variGeoData.setValue(3, QVariant(rMoment));	//J  Ixx r
+		variGeoData.setValue(4, QVariant(0.0));		//K1 y向 s
+		variGeoData.setValue(5, QVariant(0.0));		//K2 z向 t
+		variGeoData.setValue(6, QVariant(0.0));		//I12 Izy
+		_data->_varGeos.appendData(variGeoData);
 
 	}
 
-//	int eleCount = _data->_rodManager.getDataCount();
+//	int eleCount = _data->_beamManager.getDataCount();
 
     int eleCount = _data->_elementPath.getDataCount();
-    MDataModel initStrain;
-    MDataManager initSCase;
-    MDataManager initSCase2;
-
 	for (int i = 0; i < nEle; i++)
 	{
 		/*
-	     [4]
 	     *  |0~4|     :单元号
-	     *  |15~19|:材料号
+		 *  |5~9|     :节点号
+		 *  |10~14|   :节点号
+		 *  |15~19|   :局部坐标辅助节点
+		 *  |20~24|   :材料
 		 */
 		QString line = _data->_readLine();
 
-		QString dataType = "org.sipesc.fems.data.barelementdata";
+		QString dataType = "org.sipesc.fems.data.beamelementdata";
 		MDataFactory factory = _data->_factoryManager.getFactory(dataType);
 		Q_ASSERT(!factory.isNull());
 
 		MElementData eleData = factory.createObject();//默认，每组单元号严格按照1～nEle 排列
 		int eleId = eleCount + line.mid(0,5).toInt();// |0~4|   :单元号
-		int  ematId = matCount + line.mid(15,5).toInt();//|15~19|:材料号
+		int  ematId = matCount + line.mid(20,5).toInt();//|20~24|:材料号
 		eles.append(eleId);
 
-		// TODO 非线性索单元 ***************************************************
-		double inistr = line.mid(25,10).toDouble(); //|25~34|:材料号
-		if(inistr!=0){
-			if(!initSCase.isOpen()){
-				initStrain = _data->_baseManager.createDataModel();
-				bool ok = initStrain.open(_data->_model,"InitialStrain");
-				if (!ok){
-					QString errorMessage = "can't open initStrain DataModel "
-							" in MJfdCrodElementHandlerImpl::handleEntry() ";
-					qDebug() << errorMessage;
-					_data->_monitor.setMessage(errorMessage);
-					return false;
-				}
-
-				initSCase = _data->_baseManager.createDataManager();
-				ok = initSCase.open(initStrain,"1");
-				if (!ok){
-					QString errorMessage = "can't open initStrain 1 DataManager "
-							" in MJfdCrodElementHandlerImpl::handleEntry() ";
-					qDebug() << errorMessage;
-					_data->_monitor.setMessage(errorMessage);
-					return false;
-				}
-				initSCase2 = _data->_baseManager.createDataManager();
-				ok = initSCase2.open(initStrain,"2");
-				if (!ok){
-					QString errorMessage = "can't open initStrain 2 DataManager "
-							" in MJfdCrodElementHandlerImpl::handleEntry() ";
-					qDebug() << errorMessage;
-					_data->_monitor.setMessage(errorMessage);
-					return false;
-				}
-
-				_data->_mFactory = _data->_objManager.getObject(
-						"org.sipesc.fems.matrix.matrixfactory");
-				Q_ASSERT(!_data->_mFactory.isNull());
-			}
-
-			MMatrix initSVal = _data->_mFactory.createMatrix(1,1);
-			initSVal(0,0,inistr);
-			MMatrixData initSValData;
-			initSVal >> initSValData;
-			initSValData.setId(eleId);
-			initSCase.appendData(initSValData);
-
-			MMatrix initSVal2 = _data->_mFactory.createMatrix(1,1);
-			initSVal(0,0,0);
-			MMatrixData initSValData2;
-			initSVal2 >> initSValData2;
-			initSValData2.setId(eleId);
-			initSCase2.appendData(initSValData2);
-		}
-		// 非线性索单元 ***************************************************
-
-		/*
-		[5]
-		 *  |0~5|     :node1
-		 *  |6~11|  :node2
-		 */
-		line = _data->_readLine();
-		int node1 = line.mid(0,6).toInt();// |0~5|     :node1
-		int node2 = line.mid(6,6).toInt();// |6~9|     :node2
+		int node1 = line.mid(5,5).toInt();
+		int node2 = line.mid(10,5).toInt();
+		int node3 = line.mid(15,5).toInt();
 
 		eleData.setId(eleId);
 
@@ -406,7 +418,7 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 		eleData.setPropertyId(ematId);
 		eleData.setNodeId(0, node1);
 		eleData.setNodeId(1, node2);
-		_data->_rodManager.appendData(eleData);
+		_data->_beamManager.appendData(eleData);
 
 		QString dataType2 = "org.sipesc.fems.data.propertyrefdata";
 		MDataFactory factory2 = _data->_factoryManager.getFactory(dataType2);
@@ -417,9 +429,25 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 		property.setPropertyId(_data->_elesGlobal.getValue(MElementsGlobal::MaterialId), ematId);
 		property.setPropertyId(_data->_elesGlobal.getValue(MElementsGlobal::GeometryId), ematId);
 		_data->_general.appendData(property);
+
+		MNodeData node1Data = _data->_node.getData(node1);
+		MNodeData node3Data = _data->_node.getData(node3);
+		double x2 = node3Data.getX() - node1Data.getX();
+		double y2 = node3Data.getY() - node1Data.getY();
+		double z2 = node3Data.getZ() - node1Data.getZ();
+
+		MVector b = _data->_vFactory.createVector(9);
+		b.fill(0);
+
+		b(6,x2);
+		b(7,y2);
+		b(8,z2);
+
+		MVectorData vData;
+		b >> vData;
+		vData.setId(eleId);
+		_data->_geoReferManager.appendData(vData);
 	}
-	initSCase.close();
-	initStrain.close();
 
 	{
 		QString dataType = "org.sipesc.fems.data.propertydata";
@@ -430,7 +458,7 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 		Q_ASSERT(!elesGroupData.isNull());
 
 		eleGroupId = _data->_eleGroup.getDataCount()+1;
-		elesGroupData.setType(_data->_elesGlobal.getValue(MElementsGlobal::BarElement));
+		elesGroupData.setType(_data->_elesGlobal.getValue(MElementsGlobal::BeamElement));
 		elesGroupData.setId(eleGroupId);
 		elesGroupData.setValueCount(ecnt+1);
 		elesGroupData.setValue(0,QVariant(nonline));
@@ -441,3 +469,4 @@ bool MJfdCrodElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream* l
 
 	return true;
 }
+

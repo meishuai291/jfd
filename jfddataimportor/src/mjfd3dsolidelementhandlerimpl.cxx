@@ -426,12 +426,13 @@ bool MJfd3DSolidElementHandlerImpl::handleEntry(QTextStream* stream, QTextStream
 	MPropertyData elesGroupData = factory.createObject();
 	Q_ASSERT(!elesGroupData.isNull());
 
+	eleGroupId = _data->_eleGroup.getDataCount()+1;
 	elesGroupData.setType("HexaBrickElement");
 	elesGroupData.setId(eleGroupId);
-	elesGroupData.setValueCount(ecnt);
-
+	elesGroupData.setValueCount(ecnt+1);
+	elesGroupData.setValue(0,0);
 	for (int i = 0; i < ecnt; i++)
-		elesGroupData.setValue(i,eles[i]);
+		elesGroupData.setValue(i+1,eles[i]);
 
 	_data->_eleGroup.appendData(elesGroupData);
 

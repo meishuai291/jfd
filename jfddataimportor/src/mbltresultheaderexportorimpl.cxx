@@ -91,6 +91,10 @@ public:
 	bool ResultsOutput(QTextStream* stream);
 	bool StaticResultsOutput(QTextStream* stream);
 	bool DynamicResultsOutput(QTextStream* stream);
+
+	QString BeamEleMsg(int Nele, int gid);
+	bool BeamElementInfoOutput(QTextStream* stream,int);
+	bool BeamEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
 };
 
 MBltResultHeaderExportorImpl::MBltResultHeaderExportorImpl() {
@@ -206,14 +210,14 @@ bool MBltResultHeaderExportorImpl::dataExport(QTextStream* stream,
 			return false;
 		}
 		_data->_model = modelAnother;
-	}
-	isOk = _data->ResultsOutput(stream);
-	if(!isOk){
-		return false;
+		isOk = _data->ResultsOutput(stream);
+		if(!isOk){
+			return false;
+		}
+		_data->_model.close();
+		_data->_model = _data->_modelOri;
 	}
 
-	_data->_model.close();
-	_data->_model = _data->_modelOri;
 #endif
 
 	return true;
@@ -247,12 +251,17 @@ bool MBltResultHeaderExportorImpl::Data::ResultsOutput(QTextStream* stream){
 void MBltResultHeaderExportorImpl::Data::SolverInfoOutput(QTextStream* stream, QString fileName) {
 
 	QDate d = QDate::currentDate();
+	QTime t = QTime::currentTime();
 	(*stream) << QString("\n         欢迎使用《开放式结构有限元分析系统SiPESC.FEMS》\n");
 	(*stream) << QString("             研制单位 : 大连理工大学 工程力学系\n\n");
 	(*stream) << QString("         计算日期 :         ")
 			<< QString::number(d.year(), 10) << "           "
 			<< QString::number(d.month(), 10) << "          "
 			<< QString::number(d.day(), 10) << "\n";
+	(*stream) << QString("         计算时间 :         ")
+				<< QString::number(t.hour(), 10) << "           "
+				<< QString::number(t.minute(), 10) << "          "
+				<< QString::number(t.second(), 10) << "\n";
 	(*stream) << QString("         输入文件 ：") << "\n";
 	(*stream) << QString("         输出文件 ： ") << fileName << "\n";
 	(*stream) << "\n\n\n";
@@ -372,7 +381,7 @@ bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) 
 
 	int i = 0;
 	while (i < _elegroupcnt) {
-		std::cout << "The EleGroup Count " << _elegroupcnt << " now in " << i+1 <<std::endl;
+		std::cout << "The EleGroup Count " << _elegroupcnt << " now at " << i+1 <<std::endl;
 
 		MPropertyData eleGroup = _EleGroupManager.getDataAt(i);
 		int gId = eleGroup.getId();
@@ -386,6 +395,8 @@ bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) 
 			RodElementInfoOutput(stream, gId);
 		}else if(type == "QuadDKQShElement"){
 			ShellElementInfoOutput(stream, gId);
+		}else if(type == "BeamElement"){
+			BeamElementInfoOutput(stream, gId);
 		}
 		i = i + 1;
 	}
@@ -409,7 +420,7 @@ bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* str
 
 	MPropertyData eleGroup = _EleGroupManager.getData(id);
 	QString type = eleGroup.getType();
-	int Elecount = eleGroup.getValueCount();
+	int Elecount = eleGroup.getValueCount()-1;
 
 	MDataManager EleManager = _dbManager.createDataManager();
 	bool isOk = EleManager.open(_elementPath, type);
@@ -422,8 +433,13 @@ bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* str
 	}
 
 	QString str;
+	QString strt="LINEAR";
+	if(eleGroup.getValue(0).toInt()==1){
+		strt="NONLINEAR";
+	}
+
 	QString groupId = BltForamt::blank(id, 5);     ///=号后9位，gid在前5位
-	str.append(" E L E M E N T   G R O U P ........................... =" + groupId + "    ( LINEAR )\n\n\n\n");
+	str.append(" E L E M E N T   G R O U P ........................... =" + groupId + "    ( "+ strt +" )\n\n\n\n");
 	str.append(SolidEleMsg(Elecount, id));
 	str.append(eleHeader);
 	str.append(solidHeader);
@@ -435,9 +451,9 @@ bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* str
 			QString sEid = BltForamt::blank(j + 1, 5);
 
 			MElementData eleData1 = EleManager.getData(
-					eleGroup.getValue(2 * j).toInt());
+					eleGroup.getValue(2 * j+1).toInt());
 			MElementData eleData2 = EleManager.getData(
-					eleGroup.getValue(2 * j + 1).toInt());
+					eleGroup.getValue(2 * j + 2).toInt());
 
 			QString SnodeId = " ";
 			int gnc = eleData1.getNodeCount();
@@ -472,8 +488,8 @@ bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* str
 
 	}else{
 
-		for (int j = 0; j < Elecount; j++) {
-			QString sEid = BltForamt::blank(j + 1, 5);
+		for (int j = 1; j <= Elecount; j++) {
+			QString sEid = BltForamt::blank(j, 5);
 
 			MElementData eleData1 = EleManager.getData(
 					eleGroup.getValue(j).toInt());
@@ -514,7 +530,7 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 
 	MPropertyData eleGroup = _EleGroupManager.getData(id);
 	QString type = eleGroup.getType();
-	int Elecount = eleGroup.getValueCount();
+	int Elecount = eleGroup.getValueCount()-1;
 
 	MDataManager EleManager = _dbManager.createDataManager();
 	bool isOk = EleManager.open(_elementPath, type);
@@ -527,8 +543,13 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 	}
 
 	QString str;
+	QString strt="LINEAR";
+	if(eleGroup.getValue(0).toInt()==1){
+		strt="NONLINEAR";
+	}
+
 	QString groupId = BltForamt::blank(id, 5);     ///=号后9位，gid在前5位
-	str.append(" E L E M E N T   G R O U P ........................... =" + groupId + "    ( LINEAR )\n\n\n\n");
+	str.append(" E L E M E N T   G R O U P ........................... =" + groupId + "    ( "+ strt +" )\n\n\n\n");
 	str.append(RodEleMsg(Elecount, id));
 	str.append(eleHeader);
 	str.append(rodHeader);
@@ -536,10 +557,10 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 	MBarAxialForceParserImpl barParser;
 	barParser.initialize(_model);
 
-	for (int j = 0; j < Elecount; j++) {
+	for (int j = 1; j <= Elecount; j++) {
 		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
 
-		QString sEid = BltForamt::blank(j + 1, 5);
+		QString sEid = BltForamt::blank(j, 5);
 
 		double len = barParser.getLength(eleData1);
 		QString length = BltForamt::sciNot(len,5,12);
@@ -558,6 +579,59 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 
 	return true;
 }
+bool MBltResultHeaderExportorImpl::Data::BeamElementInfoOutput(QTextStream* stream,int id){
+
+	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
+	QString rodHeader = "    M   II   JJ   KK MTYP  IPS  ISV   KG  IELREL    ETIME      ETIME2   INTLOC  INTEGRATION POINT        GLOBAL  COORDINATES \n\n";
+	rodHeader += "                                                                                  R     S     T       X           Y           Z \n";
+	rodHeader += "\n\n\n";
+	QString rodEH ="    1    1    0    1       0  0.0000E+00  0.0000E+00    0";
+
+	MPropertyData eleGroup = _EleGroupManager.getData(id);
+	QString type = eleGroup.getType();
+	int Elecount = eleGroup.getValueCount()-1;
+
+	MDataManager EleManager = _dbManager.createDataManager();
+	bool isOk = EleManager.open(_elementPath, type);
+	if(!isOk){
+		QString errorMessage = QString("can't open %1 DataManager "
+				"in MBltResultHeaderExportorImpl::Data::BeamElementInfoOutput() ").arg(eleGroup.getType());
+		mReportError(M_ERROR_FATAL, errorMessage);
+		_monitor.setMessage(errorMessage);
+		return false;
+	}
+
+	QString str;
+	QString strt="LINEAR";
+	if(eleGroup.getValue(0).toInt()==1){
+		strt="NONLINEAR";
+	}
+
+	QString groupId = BltForamt::blank(id, 5);     ///=号后9位，gid在前5位
+	str.append(" E L E M E N T   G R O U P ........................... =" + groupId + "    ( "+ strt +" )\n\n\n\n");
+	str.append(BeamEleMsg(Elecount, id));
+	str.append(eleHeader);
+	str.append(rodHeader);
+
+	for (int j = 1; j <= Elecount; j++) {
+		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
+
+		QString sEid = BltForamt::blank(j, 5);
+
+		QString SnodeId;
+		int gnc = eleData1.getNodeCount();
+		for (int ttt = 0; ttt < gnc; ttt++) {
+			int nodeId = eleData1.getNodeId(ttt);
+			SnodeId += BltForamt::blank(nodeId, 5);
+		}
+		str.append(sEid + SnodeId + BltForamt::blank(0, 5) + rodEH);   //存入一个单元块信息
+		str += "\n\n";
+	}
+
+	(*stream) << str;
+
+	return true;
+}
 bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* stream,int id){
 
 	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
@@ -569,21 +643,26 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 
 	MPropertyData eleGroup = _EleGroupManager.getData(id);
 	QString type = eleGroup.getType();
-	int Elecount = eleGroup.getValueCount();
+	int Elecount = eleGroup.getValueCount()-1;
 
 	MDataManager EleManager = _dbManager.createDataManager();
 	bool isOk = EleManager.open(_elementPath, type);
 	if(!isOk){
 		QString errorMessage = QString("can't open %1 DataManager "
-				"in MBltResultHeaderExportorImpl::Data::RodElementInfoOutput() ").arg(eleGroup.getType());
+				"in MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput() ").arg(eleGroup.getType());
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
 	}
 
 	QString str;
+	QString strt="LINEAR";
+	if(eleGroup.getValue(0).toInt()==1){
+		strt="NONLINEAR";
+	}
+
 	QString groupId = BltForamt::blank(id, 5);     ///=号后9位，gid在前5位
-	str.append(" E L E M E N T   G R O U P ........................... =" + groupId + "    ( LINEAR )\n\n\n\n");
+	str.append(" E L E M E N T   G R O U P ........................... =" + groupId + "    ( "+ strt +" )\n\n\n\n");
 
 
 #if QUAD	// 四边形
@@ -591,8 +670,8 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 	str.append(eleHeader);
 	str.append(shellHeader);
 
-	for (int j = 0; j < Elecount; j++) {
-		QString sEid = BltForamt::blank(j + 1, 5);
+	for (int j = 1; j <= Elecount; j++) {
+		QString sEid = BltForamt::blank(j, 5);
 
 		int eleId = eleGroup.getValue(j).toInt();
 		MElementData eleData = EleManager.getData(eleId);
@@ -618,8 +697,8 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 	str.append(eleHeader);
 	str.append(shellHeader);
 
-	for (int j = 0; j < Elecount; j++) {
-		QString sEid = BltForamt::blank(2*j + 1, 5);
+	for (int j = 1; j <= Elecount; j++) {
+		QString sEid = BltForamt::blank(2*j - 1, 5);
 		QString thick = BltForamt::sciNot(0,4,10);
 
 		MElementData eleData1 = EleManager.getData(eleGroup.getValue(j).toInt());
@@ -634,7 +713,7 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 		str += "\n\n";
 
 		SnodeId.clear();
-		sEid = BltForamt::blank(2*j + 2, 5);
+		sEid = BltForamt::blank(2*j, 5);
 		{
 			SnodeId += BltForamt::blank(eleData1.getNodeId(0), 6);
 			SnodeId += BltForamt::blank(eleData1.getNodeId(2), 6);
@@ -715,21 +794,28 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 		//****************************单元应力*********************************//
 		MDataModel EleStressPathModel = _dbManager.createDataModel();
 		isOk = EleStressPathModel.open(_model, "EleNodeStressPath",true);
-		Q_ASSERT(isOk);
+		if(!isOk){
+			return true;
+		}
 		MDataModel EleStressModel = _dbManager.createDataModel();
-
 		isOk = EleStressModel.open(EleStressPathModel, QString::number(TimeStep),true);
-		Q_ASSERT(isOk);
-		MDataManager EleStressManager = _dbManager.createDataManager();
+		if(!isOk){
+			return true;
+		}
 
+		//----
 		MDataModel EleStressPathModel1 = _dbManager.createDataModel();
 		isOk = EleStressPathModel1.open(_model, "IntegralStressPath",true);
-		Q_ASSERT(isOk);
+		if(!isOk){
+			return true;
+		}
 		MDataModel EleStressModel1 = _dbManager.createDataModel();
 		isOk = EleStressModel1.open(EleStressPathModel1, QString::number(TimeStep),true);
-		Q_ASSERT(isOk);
-		MDataManager EleStressManager1 = _dbManager.createDataManager();
+		if(!isOk){
+			return true;
+		}
 
+		MDataManager EleStressManager = _dbManager.createDataManager();
 		for (int i = 0; i < _elegroupcnt; i++) {
 
 			MPropertyData eleGroup = _EleGroupManager.getDataAt(i);
@@ -737,16 +823,19 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 			QString type = eleGroup.getType();
 			bool ok = EleStressManager.open(EleStressModel,type,true);
 			Q_ASSERT(ok);
-			ok = EleStressManager1.open(EleStressModel1,type,true);
-			Q_ASSERT(ok);
 
 			/** 应力输出与单元类型有关，先测试实体单元 **/
 			if(type == "HexaBrick12Element" || type == "HexaBrickElement"){
 				SolidEleStress(stream,eleGroup,EleStressManager);
 			}else if(type == "BarElement"){
+				MDataManager EleStressManager1 = _dbManager.createDataManager();
+				ok = EleStressManager1.open(EleStressModel1,type,true);
+				Q_ASSERT(ok);
 				RodEleStress(stream, eleGroup,EleStressManager1);	// 采用积分点应力
 			}else if(type == "QuadDKQShElement"){
 				ShellEleStress(stream, eleGroup,EleStressManager);
+			}else if(type == "BeamElement"){
+				BeamEleStress(stream, eleGroup,EleStressManager);	// 采用积分点应力
 			}
 		}
 	}
@@ -772,13 +861,13 @@ bool MBltResultHeaderExportorImpl::Data::SolidEleStress(QTextStream* stream, MPr
 	str1.append(stressMseg1 + groupId + "   (3/D CONTINUUM)\n\n");
 	str1.append(stressMseg2);
 
-	int Elecount = eleGroup.getValueCount();
+	int Elecount = eleGroup.getValueCount()-1;
 	if(type == "HexaBrickElement"){
 		Elecount /= 2;
 		for (int j = 0; j < Elecount; j++) {
 			QString sEid = BltForamt::blank(j + 1, 8) + "\n";
-			MDataObjectList eleStressData1 = EleStressManager.getData(eleGroup.getValue(2 * j).toInt());
-			MDataObjectList eleStressData2 = EleStressManager.getData(eleGroup.getValue(2 * j + 1).toInt());
+			MDataObjectList eleStressData1 = EleStressManager.getData(eleGroup.getValue(2 * j + 1).toInt());
+			MDataObjectList eleStressData2 = EleStressManager.getData(eleGroup.getValue(2 * j + 2).toInt());
 
 			QString ss;
 			for (int n = 0; n < 4; n++) {
@@ -813,7 +902,7 @@ bool MBltResultHeaderExportorImpl::Data::SolidEleStress(QTextStream* stream, MPr
 		// 12节点单元
 		for (int j = 0; j < Elecount; j++) {
 			QString sEid = BltForamt::blank(j + 1, 8) + "\n";
-			MDataObjectList eleStressData1 = EleStressManager.getData(eleGroup.getValue(j).toInt());
+			MDataObjectList eleStressData1 = EleStressManager.getData(eleGroup.getValue(j+1).toInt());
 			Q_ASSERT(!eleStressData1.isNull());
 			if(eleStressData1.isNull()){
 				continue;
@@ -855,13 +944,13 @@ bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MProp
 	str1 += "   NUMBER  LOCATION            FORCE           STRESS           STRAIN \n";
 	str1 += "\n";
 
-	int Elecount = eleGroup.getValueCount();
+	int Elecount = eleGroup.getValueCount()-1;
 
 	MBarAxialForceParserImpl barParser;
 	barParser.initialize(_model);
 
-	for (int j = 0; j < Elecount; j++) {
-		QString sEid = BltForamt::blank(j + 1, 9);
+	for (int j = 1; j <= Elecount; j++) {
+		QString sEid = BltForamt::blank(j, 9);
 
 		MDataObjectList eleStressData = EleStressManager.getData(eleGroup.getValue(j).toInt());
 
@@ -885,11 +974,53 @@ bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MProp
 	(*stream) << str1;
 	return true;
 }
+bool MBltResultHeaderExportorImpl::Data::BeamEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
+	QString str1;
+	int gId = eleGroup.getId();
+	QString type = eleGroup.getType();
+	QString groupId = BltForamt::blank(gId, 5);     ///=号后9位，gid在前5位
+	str1 += "  S T R E S S   C A L C U L A T I O N S   F O R   E L E M E N T   G R O U P  " + groupId + "  (BEAM)\n\n";
+	str1 += " FORCES AND STRESSES ARE CALCULATED IN THE LOCAL COORDINATE SYSTEM \n";
+	str1 += "\n";
+	str1 += "  ELEMENT    OUTPUT \n";
+	str1 += "  NUMBER  LOCATION        FORCE-R        FORCE-S        FORCE-T       MOMENT-R       MOMENT-S       MOMENT-T \n";
+	str1 += "\n";
+
+	int Elecount = eleGroup.getValueCount()-1;
+
+	for (int j = 1; j <= Elecount; j++) {
+		QString sEid = BltForamt::blank(j, 8);
+
+		MDataObjectList eleStressData = EleStressManager.getData(eleGroup.getValue(j).toInt());
+		MVector stressV = _vFactory.createVector();
+
+		str1 += sEid + "         I";
+		MVectorData stress = eleStressData.getDataAt(0);
+		stressV << stress;
+		int vcc = stressV.getCount();
+		for (int vi = 0; vi < vcc; vi++) {
+			str1 += BltForamt::sciNot(stressV(vi), 5, 15);
+		}
+		str1 += "\n";
+
+		str1 += "                 J";
+		stress = eleStressData.getDataAt(1);
+		stressV << stress;
+		int vcc2 = stressV.getCount();
+		for (int vi = 0; vi < vcc2; vi++) {
+			str1 += BltForamt::sciNot(stressV(vi), 5, 15);
+		}
+		str1 += "\n\n";
+	}
+
+	(*stream) << str1;
+	return true;
+}
 // TODO 壳单元应力
 bool MBltResultHeaderExportorImpl::Data::ShellEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
 	int gId = eleGroup.getId();
 	QString type = eleGroup.getType();
-	int eleCount = eleGroup.getValueCount();
+	int eleCount = eleGroup.getValueCount()-1;
 	QString groupId = BltForamt::blank(gId, 5);     ///=号后9位，gid在前5位
 
 	QString str1;
@@ -906,9 +1037,9 @@ bool MBltResultHeaderExportorImpl::Data::ShellEleStress(QTextStream* stream, MPr
 	str1 += "                                    (STRAINS ARE ONLY PRINTED WHEN ELEMENT FLAG (IPS) SO INDICATES) \n";
 	str1 += "\n\n";
 
-	for (int j = 0; j < eleCount; j++) {
+	for (int j = 1; j <= eleCount; j++) {
 		int eleId = eleGroup.getValue(j).toInt();
-		QString sEid = BltForamt::blank(j + 1, 8) + "\n";
+		QString sEid = BltForamt::blank(j, 8) + "\n";
 
 		MDataObjectList eleStressData = EleStressManager.getData(eleId);
 		MVector stressV = _vFactory.createVector();
@@ -948,11 +1079,11 @@ bool MBltResultHeaderExportorImpl::Data::ShellEleStress(QTextStream* stream, MPr
 	str1 += " \n\n";
 
 
-	for (int j = 0; j < eleCount; j++) {
+	for (int j = 1; j <= eleCount; j++) {
 		int eleId = eleGroup.getValue(j).toInt();
 
-		QString sEid1 = BltForamt::blank(2*j + 1, 6);
-		QString sEid2 = BltForamt::blank(2*j + 2, 6);
+		QString sEid1 = BltForamt::blank(2*j - 1, 6);
+		QString sEid2 = BltForamt::blank(2*j, 6);
 
 		MDataObjectList eleStressData = EleStressManager.getData(eleId);
 		MVector stressV = _vFactory.createVector();
@@ -1391,5 +1522,71 @@ QString MBltResultHeaderExportorImpl::Data::ShellEleMsg(int NEle, int GId){
 	msg += "         1         1         2         3         0         0         0         0 \n";
 	msg += "\n\n\n";
 
+	return msg;
+}
+QString MBltResultHeaderExportorImpl::Data::BeamEleMsg(int Nele, int gid){
+	QString msg = " E L E M E N T  D E F I N I T I O N \n";
+	msg += "\n\n";
+	msg += " ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ). . =    4 \n";
+	msg += "     EQ.1, TRUSS ELEMENTS \n";
+	msg += "     EQ.2, 2-DIM ELEMENTS \n";
+	msg += "     EQ.3, 3-DIM ELEMENTS \n";
+	msg += "     EQ.4, BEAM  ELEMENTS \n";
+	msg += "     EQ.5, ISO/BEAM ELEMENTS \n";
+	msg += "     EQ.6, PLATE ELEMENTS \n";
+	msg += "     EQ.7, SHELL ELEMENTS \n";
+	msg += "     EQ.8, PIPE ELEMENTS \n";
+	msg += "     EQ.9, GENERAL ELEMENTS \n";
+	msg += "     EQ.10, EMPTY \n";
+	msg += "     EQ.11, 2-DIM FLUID ELEMENTS \n";
+	msg += "     EQ.12, 3-DIM FLUID ELEMENTS \n";
+	msg += " \n";
+	msg += " NUMBER OF ELEMENTS. . . . . . . . . . .( NPAR(2) ). . =   " + BltForamt::blank(Nele, 5) + " \n";
+	msg += " \n";
+	msg += " TYPE OF NONLINEAR ANALYSIS. . . . . . .( NPAR(3) ). . =    0 \n";
+	msg += "     EQ.0, LINEAR ELASTIC ONLY           \n";
+	msg += "     EQ.1, MATERIALLY NONLINEAR ONLY   \n";
+	msg += "     EQ.2, LARGE DISPLACEMENTS AND ROTATIONS \n";
+	msg += "           WITH SMALL STRAINS \n";
+	msg += " \n";
+	msg += " ELEMENT BIRTH AND DEATH OPTIONS . . . .( NPAR(4) ). . =    0 \n";
+	msg += "     EQ.0, OPTION NOT ACTIVE             \n";
+	msg += "     EQ.1, BIRTH OPTION ACTIVE           \n";
+	msg += "     EQ.2, DEATH OPTION ACTIVE \n";
+	msg += "     EQ.3, DEATH AFTER BIRTH OPTION ACTIVE \n";
+	msg += " \n\n";
+	msg += " SKEW COORDINATE SYSTEM \n";
+	msg += "     REFERENCE INDICATOR . . . . . . . .( NPAR(6) ) . .=    0 \n";
+	msg += "     EQ.0, ALL ELEMENT NODES \n";
+	msg += "           USE THE GLOBAL SYSTEM ONLY \n";
+	msg += "     EQ.1, ELEMENT NODES REFER      \n";
+	msg += "           TO SKEW COORDINATE SYSTEM \n";
+	msg += " \n";
+	msg += " NUMBER OF MOMENT RELEASE TABLES . . . .( NPAR(12)). . =    0 \n";
+	msg += " \n\n\n";
+	msg += " M A T E R I A L   D E F I N I T I O N     \n";
+	msg += " \n\n";
+	msg += " MATERIAL MODEL. . . . . . . . . . . . .( NPAR(15)). . =    1 \n";
+	msg += "    EQ.1,   LINEAR ELASTIC               \n";
+	msg += "    EQ.2,  ELASTIC-PLASTIC               \n";
+	msg += " \n";
+	msg += " NUMBER OF DIFFERENT SETS OF MATERIAL    \n";
+	msg += "     CONSTANTS . . . . . . . . . . . . .( NPAR(16)). . =    1 \n";
+	msg += " \n\n\n\n";
+	msg += " S T O R A G E   I N F O R M A T I O N \n";
+	msg += " \n\n";
+	msg += " LENGTH OF ARRAY NEEDED FOR STORING ELEMENT GROUP \n";
+	msg += " DATA (GROUP    " + BltForamt::blank(gid,3) + "). . . . . . . . . . . . .( MIDEST ). . =     142 \n";
+	msg += " \n\n\n\n\n";
+	msg += " S E C T I O N    D E F I N I T I O N    \n";
+	msg += " \n\n";
+	msg += " TYPE        E             VNU            DEN \n";
+	msg += " \n";
+	msg += "    1   0.000000E+00   0.000000E+00   0.000000E+00 \n";
+	msg += " \n\n\n\n";
+	msg += "  TYPE        R-INERTIA      S-INERTIA      T-INERTIA               AREA     SHEAR AREA(S)   SHEAR AREA(T) \n";
+	msg += " \n";
+	msg += "    1       0.0000000E+00  0.0000000E+00  0.0000000E+00       0.0000000E+00  0.0000000E+00  0.0000000E+00 \n";
+	msg += " \n\n";
 	return msg;
 }

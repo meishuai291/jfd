@@ -36,6 +36,7 @@ SET(org_sipesc_fems_bltdataprocess_src_files
     src/mtabled5parserimpl.cxx
     
     src/mjfdshellelementhandlerimpl.cxx
+    src/mjfdbeamelementhandlerimpl.cxx
     
     src/mbaraxialforceparserimpl.cxx    # 杆轴力解析
     

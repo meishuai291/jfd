@@ -127,7 +127,17 @@
         <base name="org.sipesc.utilities.MExtensionFactory"/>
       </bases>
     </extension>
-    <extension name="MJfdShellElementHandler" uuid="{3e4a8a0e-cc3d-448a-beb3-a0b3566271f8}" creatable="true" scriptable="true" description="处理*.jfd文件中的shell数据" category="org.sipesc.fems.jfdimport.MJfdEntryHandler">
+    <extension name="MJfdShellElementHandler" uuid="{3e4a8a0e-cc3d-448a-beb3-a0b3566271f8}" creatable="true" scriptable="true" description="处理*.jfd文件中的shell数据" category="org.sipesc.fems.jfdimport">
+      <bases>
+        <base name="org.sipesc.fems.jfdimport.MJfdSubEntryHandler"/>
+      </bases>
+    </extension>
+    <extension name="MJfdBeamElementHandlerFactory" uuid="{0693aca3-a57f-4239-bc36-108eab09c122}" creatable="true" scriptable="true" description="the factory for MJfdBeamElementHandler." category="fems.factory.jfdentryhandler">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MJfdBeamElementHandler" uuid="{443bf52d-a060-4c11-9e65-cd1ba143e4fb}" creatable="true" scriptable="true" description="beam" category="org.sipesc.fems.jfdimport">
       <bases>
         <base name="org.sipesc.fems.jfdimport.MJfdSubEntryHandler"/>
       </bases>

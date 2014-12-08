@@ -139,5 +139,13 @@
         <source>the factory for MJfdShellElementHandler.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>beam</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the factory for MJfdBeamElementHandler.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
