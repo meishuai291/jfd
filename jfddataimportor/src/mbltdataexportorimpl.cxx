@@ -88,8 +88,11 @@ bool MBltDataExportorImpl::start(const QVariant& control){
 	Q_ASSERT(_data->_isInitialized);
 
 	QString fileName;
-//	fileName = "JFDData.out";
-	fileName = control.toString();
+	if(control.isNull())
+		fileName = "JFDData.out";
+	else
+		fileName = control.toString();
+
 	QFile outFile;
 	outFile.setFileName(fileName);
 	if (!outFile.open(QIODevice::Text|QIODevice::WriteOnly))
