@@ -1,14 +1,15 @@
 /*
- * mbltresultheaderexportorimpl.cxx
+ * mbltresultexportorimpl.cxx
  *
  *  Created on: 2014年9月19日
  *      Author: sipesc
  */
+
+#include <mbltresultexportorimpl.h>
 #include <format.h>
 
 #define QUAD 1
 
-#include <mbltresultheaderexportorimpl.h>
 #include <org.sipesc.fems.matrix.mvectorfactory.h>
 #include <org.sipesc.fems.matrix.mvector.h>
 #include <qdebug.h>
@@ -47,7 +48,7 @@ using namespace org::sipesc::fems::bltexport;
 
 #include <mbaraxialforceparserimpl.h>
 
-class MBltResultHeaderExportorImpl::Data {
+class MBltResultExportorImpl::Data {
 public:
 	Data() {
 		_isInitialized = false;
@@ -73,41 +74,41 @@ public:
 	MVectorFactory _vFactory;
 	int _elegroupcnt;
 public:
-	QString SolidEleMsg(int Nele, int gid);
-	QString RodEleMsg(int Nele, int gid);
-	QString ShellEleMsg(int Nele, int gid);
-
-	void SolverInfoOutput(QTextStream* stream, QString fileName);
 	bool ControllingInfoOutput(QTextStream* stream);
+
 	bool NodeInfoOutput(QTextStream* stream);
+
 	bool ElementInfoOutput(QTextStream* stream);
+	QString SolidEleMsg(int Nele, int gid);
 	bool SolidElementInfoOutput(QTextStream* stream,int);
+	QString RodEleMsg(int Nele, int gid);
 	bool RodElementInfoOutput(QTextStream* stream,int);
+	QString ShellEleMsg(int Nele, int gid);
 	bool ShellElementInfoOutput(QTextStream* stream,int);
-	bool SolidEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
-	bool RodEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
-	bool ShellEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
+	QString BeamEleMsg(int Nele, int gid);
+	bool BeamElementInfoOutput(QTextStream* stream,int);
 
 	bool ResultsOutput(QTextStream* stream);
 	bool StaticResultsOutput(QTextStream* stream);
 	bool DynamicResultsOutput(QTextStream* stream);
 
-	QString BeamEleMsg(int Nele, int gid);
-	bool BeamElementInfoOutput(QTextStream* stream,int);
+	bool SolidEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
+	bool RodEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
+	bool ShellEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
 	bool BeamEleStress(QTextStream* stream,MPropertyData&,MDataManager&);
 };
 
-MBltResultHeaderExportorImpl::MBltResultHeaderExportorImpl() {
-	_data.reset(new MBltResultHeaderExportorImpl::Data);
+MBltResultExportorImpl::MBltResultExportorImpl() {
+	_data.reset(new MBltResultExportorImpl::Data);
 
 	if (!_data.get())
-		mReportError(M_ERROR_FATAL, "MBltResultHeaderExportorImpl::"
-				"MBltResultHeaderExportorImpl() ****** failed");
+		mReportError(M_ERROR_FATAL, "MBltResultExportorImpl::"
+				"MBltResultExportorImpl() ****** failed");
 
 	UtilityManager util = _data->_objManager.getObject(
 			"org.sipesc.core.utility.utilitymanager");
 	Q_ASSERT(!util.isNull());
-	_data->_monitor = util.createProgressMonitor("MBltResultHeaderExportor",
+	_data->_monitor = util.createProgressMonitor("MBltResultExportor",
 			ProgressMonitor());
 	Q_ASSERT(!_data->_monitor.isNull());
 
@@ -124,11 +125,11 @@ MBltResultHeaderExportorImpl::MBltResultHeaderExportorImpl() {
 	Q_ASSERT(!_data->_meleGl.isNull());
 }
 
-MBltResultHeaderExportorImpl::~MBltResultHeaderExportorImpl() {
+MBltResultExportorImpl::~MBltResultExportorImpl() {
 	_data->_modelOri = MExtension();
 }
 
-bool MBltResultHeaderExportorImpl::initialize(MDataModel& model,
+bool MBltResultExportorImpl::initialize(MDataModel& model,
 		bool isRepeated) {
 	if (_data->_isInitialized)
 		return false; //不能重复初始化
@@ -141,7 +142,7 @@ bool MBltResultHeaderExportorImpl::initialize(MDataModel& model,
 	Q_ASSERT(isOk);
 	if (!isOk){
 		QString errorMessage = "can't open PropertyRefPath DataModel"
-		  "                 in MBltResultHeaderExportorImpl::initialize";
+		  "                 in MBltResultExportorImpl::initialize";
 		_data->_monitor.setMessage(errorMessage);
 		return false;
 	}
@@ -150,7 +151,7 @@ bool MBltResultHeaderExportorImpl::initialize(MDataModel& model,
 	Q_ASSERT(isOk);
 	if (!isOk){
 		QString errorMessage = "can't open GeneralRef DataManager"
-		  "                 in MBltResultHeaderExportorImpl::initialize";
+		  "                 in MBltResultExportorImpl::initialize";
 		_data->_monitor.setMessage(errorMessage);
 		return false;
 	}
@@ -159,7 +160,7 @@ bool MBltResultHeaderExportorImpl::initialize(MDataModel& model,
 	Q_ASSERT(isOk);
 	if (!isOk){
 		QString errorMessage = "can't open Geometry DataManager"
-		  "                 in MBltResultHeaderExportorImpl::initialize";
+		  "                 in MBltResultExportorImpl::initialize";
 		_data->_monitor.setMessage(errorMessage);
 		return false;
 	}
@@ -168,19 +169,20 @@ bool MBltResultHeaderExportorImpl::initialize(MDataModel& model,
 	return true;
 }
 
-ProgressMonitor MBltResultHeaderExportorImpl::getProgressMonitor() const {
+ProgressMonitor MBltResultExportorImpl::getProgressMonitor() const {
 	return _data->_monitor;
 }
 
-bool MBltResultHeaderExportorImpl::dataExport(QTextStream* stream,
-		QString fileName) {
+bool MBltResultExportorImpl::dataExport(QTextStream* stream) {
 	/**
 	 * 未处理
 	 *   EQUATION NUMBERS
 	 *   C O N S T R A I N T   E Q U A T I O N S   D A T A
 	 */
 	bool isOk;
-	_data->SolverInfoOutput(stream, fileName);
+
+	_data->_LcaseManager = _data->_dbManager.createDataManager();
+	isOk = _data->_LcaseManager.open(_data->_model, "LoadCase",true);
 
 	isOk = _data->NodeInfoOutput(stream);
 	if(!isOk){
@@ -205,7 +207,7 @@ bool MBltResultHeaderExportorImpl::dataExport(QTextStream* stream,
 		bool ok = modelAnother.open(_data->_model, "SecondAnalysisPath");
 		if (!ok){
 			QString errorMessage = "can't open SecondAnalysisPath DataModel"
-			  "                 in MBltResultHeaderExportorImpl::initialize";
+			  "                 in MBltResultExportorImpl::initialize";
 			_data->_monitor.setMessage(errorMessage);
 			return false;
 		}
@@ -222,7 +224,11 @@ bool MBltResultHeaderExportorImpl::dataExport(QTextStream* stream,
 
 	return true;
 }
-bool MBltResultHeaderExportorImpl::Data::ResultsOutput(QTextStream* stream){
+
+/**============================================================================
+ * 结果输出
+ */
+bool MBltResultExportorImpl::Data::ResultsOutput(QTextStream* stream){
 	bool isOk;
 	MSharedVariablesManager sharedVariables = _extManager.createExtension(
 			"org.sipesc.utilities.MSharedVariablesManager");
@@ -247,28 +253,8 @@ bool MBltResultHeaderExportorImpl::Data::ResultsOutput(QTextStream* stream){
 	return true;
 }
 //*************************写入总控信息*************************//
-
-void MBltResultHeaderExportorImpl::Data::SolverInfoOutput(QTextStream* stream, QString fileName) {
-
-	QDate d = QDate::currentDate();
-	QTime t = QTime::currentTime();
-	(*stream) << QString("\n         欢迎使用《开放式结构有限元分析系统SiPESC.FEMS》\n");
-	(*stream) << QString("             研制单位 : 大连理工大学 工程力学系\n\n");
-	(*stream) << QString("         计算日期 :         ")
-			<< QString::number(d.year(), 10) << "           "
-			<< QString::number(d.month(), 10) << "          "
-			<< QString::number(d.day(), 10) << "\n";
-	(*stream) << QString("         计算时间 :         ")
-				<< QString::number(t.hour(), 10) << "           "
-				<< QString::number(t.minute(), 10) << "          "
-				<< QString::number(t.second(), 10) << "\n";
-	(*stream) << QString("         输入文件 ：") << "\n";
-	(*stream) << QString("         输出文件 ： ") << fileName << "\n";
-	(*stream) << "\n\n\n";
-
-}
-
-bool MBltResultHeaderExportorImpl::Data::ControllingInfoOutput(QTextStream* stream) {
+//此函数舍弃，总控信息不再包含于结果文件内
+bool MBltResultExportorImpl::Data::ControllingInfoOutput(QTextStream* stream) {
 
 	bool isOk(false);
 	int Nmode = 0;	//模态阶数
@@ -279,8 +265,8 @@ bool MBltResultHeaderExportorImpl::Data::ControllingInfoOutput(QTextStream* stre
 		Nmode = vibData.getValue(0).toInt();
 	}
 
-	_LcaseManager = _dbManager.createDataManager();
-	isOk = _LcaseManager.open(_model, "LoadCase",true);
+//	_LcaseManager = _dbManager.createDataManager();
+//	isOk = _LcaseManager.open(_model, "LoadCase",true);
 	int Nste = _LcaseManager.getDataCount();  //时间步数
 
 	(*stream) << "\n\n";
@@ -298,7 +284,7 @@ bool MBltResultHeaderExportorImpl::Data::ControllingInfoOutput(QTextStream* stre
 }
 
 //*************************节点数据输出*************************//
-bool MBltResultHeaderExportorImpl::Data::NodeInfoOutput(QTextStream* stream) {
+bool MBltResultExportorImpl::Data::NodeInfoOutput(QTextStream* stream) {
 	printf("Writing Node Message ...\n");
 
 	QString str;
@@ -316,7 +302,7 @@ bool MBltResultHeaderExportorImpl::Data::NodeInfoOutput(QTextStream* stream) {
 	bool isOk = nodeManager.open(_model, "Node",true);
 	if(!isOk){
 		QString errorMessage = "can't open Node DataManager "
-				"in MBltResultHeaderExportorImpl::Data::NodeInfoOutput() ";
+				"in MBltResultExportorImpl::Data::NodeInfoOutput() ";
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
@@ -350,14 +336,14 @@ bool MBltResultHeaderExportorImpl::Data::NodeInfoOutput(QTextStream* stream) {
 	return true;
 }
 //*************************单元信息输出*************************//
-bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) {
+bool MBltResultExportorImpl::Data::ElementInfoOutput(QTextStream* stream) {
 	std::cout << "Writing Element Message ..." <<std::endl;
 
 	_EleGroupManager = _dbManager.createDataManager();
 	bool isOk = _EleGroupManager.open(_model, "EleGroup");
 	if(!isOk){
 		QString errorMessage = "can't open EleGroup DataManager "
-				"in MBltResultHeaderExportorImpl::Data::ElementInfoOutput() ";
+				"in MBltResultExportorImpl::Data::ElementInfoOutput() ";
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
@@ -368,7 +354,7 @@ bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) 
 	isOk = _elementPath.open(_model, "ElementPath");
 	if(!isOk){
 		QString errorMessage = "can't open ElementPath DataManager "
-				"in MBltResultHeaderExportorImpl::Data::ElementInfoOutput() ";
+				"in MBltResultExportorImpl::Data::ElementInfoOutput() ";
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
@@ -407,7 +393,7 @@ bool MBltResultHeaderExportorImpl::Data::ElementInfoOutput(QTextStream* stream) 
 
 	return true;
 }
-bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* stream,int id){
+bool MBltResultExportorImpl::Data::SolidElementInfoOutput(QTextStream* stream,int id){
 
 	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
 	QString solidHeader = "    M IELD IELX  IPS  ISV MTYP MAXES   KG    ETIME      ETIME2    INTLOC NODE 1 NODE 2 NODE 3 NODE 4 NODE 5 NODE 6 NODE 7 NODE 8 \n";
@@ -426,7 +412,7 @@ bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* str
 	bool isOk = EleManager.open(_elementPath, type);
 	if(!isOk){
 		QString errorMessage = QString("can't open %1 DataManager "
-				"in MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput() ").arg(eleGroup.getType());
+				"in MBltResultExportorImpl::Data::SolidElementInfoOutput() ").arg(eleGroup.getType());
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
@@ -518,7 +504,7 @@ bool MBltResultHeaderExportorImpl::Data::SolidElementInfoOutput(QTextStream* str
 
 	return true;
 }
-bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* stream,int id){
+bool MBltResultExportorImpl::Data::RodElementInfoOutput(QTextStream* stream,int id){
 
 	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
 	QString rodHeader = "    N IELD  IPS  ISV  MTYP   KG    INITIAL       GAP        LENGTH        ETIME       ETIME2     INTLOC   NODE1  NODE2  NODE3  NODE4 \n";
@@ -536,7 +522,7 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 	bool isOk = EleManager.open(_elementPath, type);
 	if(!isOk){
 		QString errorMessage = QString("can't open %1 DataManager "
-				"in MBltResultHeaderExportorImpl::Data::RodElementInfoOutput() ").arg(eleGroup.getType());
+				"in MBltResultExportorImpl::Data::RodElementInfoOutput() ").arg(eleGroup.getType());
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
@@ -579,7 +565,7 @@ bool MBltResultHeaderExportorImpl::Data::RodElementInfoOutput(QTextStream* strea
 
 	return true;
 }
-bool MBltResultHeaderExportorImpl::Data::BeamElementInfoOutput(QTextStream* stream,int id){
+bool MBltResultExportorImpl::Data::BeamElementInfoOutput(QTextStream* stream,int id){
 
 	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
 	QString rodHeader = "    M   II   JJ   KK MTYP  IPS  ISV   KG  IELREL    ETIME      ETIME2   INTLOC  INTEGRATION POINT        GLOBAL  COORDINATES \n\n";
@@ -595,7 +581,7 @@ bool MBltResultHeaderExportorImpl::Data::BeamElementInfoOutput(QTextStream* stre
 	bool isOk = EleManager.open(_elementPath, type);
 	if(!isOk){
 		QString errorMessage = QString("can't open %1 DataManager "
-				"in MBltResultHeaderExportorImpl::Data::BeamElementInfoOutput() ").arg(eleGroup.getType());
+				"in MBltResultExportorImpl::Data::BeamElementInfoOutput() ").arg(eleGroup.getType());
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
@@ -632,7 +618,7 @@ bool MBltResultHeaderExportorImpl::Data::BeamElementInfoOutput(QTextStream* stre
 
 	return true;
 }
-bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* stream,int id){
+bool MBltResultExportorImpl::Data::ShellElementInfoOutput(QTextStream* stream,int id){
 
 	QString eleHeader = " E L E M E N T   I N F O R M A T I O N \n\n\n";
 	QString shellHeader = "    N IPS ISV MTYP   KG     BET       THIC       ETIME     ETIME2   NODE1 NODE2 NODE3 INTLOC INTEG.       GLOBAL  COORDINATES \n";
@@ -649,7 +635,7 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 	bool isOk = EleManager.open(_elementPath, type);
 	if(!isOk){
 		QString errorMessage = QString("can't open %1 DataManager "
-				"in MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput() ").arg(eleGroup.getType());
+				"in MBltResultExportorImpl::Data::ShellElementInfoOutput() ").arg(eleGroup.getType());
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
@@ -729,12 +715,11 @@ bool MBltResultHeaderExportorImpl::Data::ShellElementInfoOutput(QTextStream* str
 }
 
 //****************************计算结果输出*************************//
-bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream) {
+bool MBltResultExportorImpl::Data::StaticResultsOutput(QTextStream* stream) {
+
+	(*stream) << "\n\n                                         *  THIS IS A LINEAR STATIC ANALYSIS  *\n\n\n";
 
 	bool isOk;
-
-	isOk = ControllingInfoOutput(stream);
-	Q_ASSERT(isOk);
 
 	MDataModel DisPathModel = _dbManager.createDataModel();
 	isOk = DisPathModel.open(_model, "DisplacementPath");
@@ -742,6 +727,8 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 	MDataManager DisManager = _dbManager.createDataManager();
 
 	int TimeStepCount = _LcaseManager.getDataCount();
+
+	qDebug() << "## Time Step Count is " << TimeStepCount;
 
 	for (int TimeStep = 1; TimeStep <= TimeStepCount; TimeStep++) {
 
@@ -761,17 +748,21 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 
 		DisManager.open(DisPathModel, QString::number(TimeStep));
 		int Dcnt = DisManager.getDataCount();
+
 		for (int nId = 1; nId <= Dcnt; nId++) {
 			if (nId % 45 == 0) {
 				str.append(DisplacementHead1);
 				str.append(DisplacementHead2);
 			}
-			QString SNodeId = BltForamt::blank(nId, 6) + " ";   //
-			MVectorData DisData = DisManager.getData(nId);
+
+			MVectorData DisData = DisManager.getDataAt(nId-1);
 			Q_ASSERT(!DisData.isNull());
 			MVector nodeDisV = _vFactory.createVector(); ////////////////
 			Q_ASSERT(!nodeDisV.isNull());
 			nodeDisV << DisData;
+
+			int nodeId = DisData.getId();
+			QString SNodeId = BltForamt::blank(nodeId, 6) + " ";   //
 
 			QString Sdisplacement = "";   //
 			for (int dx = 0; dx < nodeDisV.getCount(); dx++)   //
@@ -842,7 +833,7 @@ bool MBltResultHeaderExportorImpl::Data::StaticResultsOutput(QTextStream* stream
 
 	return true;
 }
-bool MBltResultHeaderExportorImpl::Data::SolidEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
+bool MBltResultExportorImpl::Data::SolidEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
 	QString str1;
 	QString stressMseg1 = " S T R E S S   C A L C U L A T I O N S   F O R   E L E M E N T   G R O U P";
 	QString stressMseg2 = " STRESSES ARE CALCULATED IN THE GLOBAL COORDINATE SYSTEM \n";
@@ -932,7 +923,7 @@ bool MBltResultHeaderExportorImpl::Data::SolidEleStress(QTextStream* stream, MPr
 	return true;
 }
 // 杆单元轴力
-bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
+bool MBltResultExportorImpl::Data::RodEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
 	QString str1;
 	int gId = eleGroup.getId();
 	QString type = eleGroup.getType();
@@ -974,7 +965,7 @@ bool MBltResultHeaderExportorImpl::Data::RodEleStress(QTextStream* stream, MProp
 	(*stream) << str1;
 	return true;
 }
-bool MBltResultHeaderExportorImpl::Data::BeamEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
+bool MBltResultExportorImpl::Data::BeamEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
 	QString str1;
 	int gId = eleGroup.getId();
 	QString type = eleGroup.getType();
@@ -1017,7 +1008,7 @@ bool MBltResultHeaderExportorImpl::Data::BeamEleStress(QTextStream* stream, MPro
 	return true;
 }
 // TODO 壳单元应力
-bool MBltResultHeaderExportorImpl::Data::ShellEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
+bool MBltResultExportorImpl::Data::ShellEleStress(QTextStream* stream, MPropertyData& eleGroup ,MDataManager& EleStressManager){
 	int gId = eleGroup.getId();
 	QString type = eleGroup.getType();
 	int eleCount = eleGroup.getValueCount()-1;
@@ -1141,25 +1132,24 @@ bool MBltResultHeaderExportorImpl::Data::ShellEleStress(QTextStream* stream, MPr
 	(*stream) << str1;
 	return true;
 }
-bool MBltResultHeaderExportorImpl::Data::DynamicResultsOutput(QTextStream* stream) {
+bool MBltResultExportorImpl::Data::DynamicResultsOutput(QTextStream* stream) {
+
+	(*stream) << "\n\n                                         *  THIS IS A LINEAR DYNAMIC ANALYSIS  *\n\n\n";
 
 	bool isOk;
-
-	isOk = ControllingInfoOutput(stream);
-	Q_ASSERT(isOk);
 
 	MDataManager evManager = _dbManager.createDataManager();
 	isOk = evManager.open(_model, _femsGlobal.getValue(MFemsGlobal::EigenValues), true);
 	if (!isOk){
 		QString errorMessage = "can't open EigenValues DataManager "
-				"in MBltResultHeaderExportorImpl::Data::DynamicResultsOutput() ";
+				"in MBltResultExportorImpl::Data::DynamicResultsOutput() ";
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
 		return false;
 	}
 	MVectorData eigenVectorData = evManager.getDataAt(0);
 	if(eigenVectorData.isNull()){
-		QString errorMessage = QString("In MBltResultHeaderExportorImpl::Data::DynamicResultsOutput()"
+		QString errorMessage = QString("In MBltResultExportorImpl::Data::DynamicResultsOutput()"
 						" ****** EigenValues Data is Null.");
 		mReportError(M_ERROR_FATAL, errorMessage);
 		_monitor.setMessage(errorMessage);
@@ -1253,7 +1243,7 @@ bool MBltResultHeaderExportorImpl::Data::DynamicResultsOutput(QTextStream* strea
 
 // ----------------------------------------------------------------------------------
 // TODO NPAR 参数
-QString MBltResultHeaderExportorImpl::Data::SolidEleMsg(int NEle, int GId) {
+QString MBltResultExportorImpl::Data::SolidEleMsg(int NEle, int GId) {
 
 	QString eleMseg = " E L E M E N T   D E F I N I T I O N\n\n\n";
 	eleMseg += " ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ). . =    3\n";
@@ -1359,7 +1349,7 @@ QString MBltResultHeaderExportorImpl::Data::SolidEleMsg(int NEle, int GId) {
 	return eleMseg;
 }
 // TODO NPAR 参数
-QString MBltResultHeaderExportorImpl::Data::RodEleMsg(int NEle, int GId)
+QString MBltResultExportorImpl::Data::RodEleMsg(int NEle, int GId)
 {
 	QString msg = " E L E M E N T   D E F I N I T I O N \n";
 	msg += "\n\n";
@@ -1442,7 +1432,7 @@ QString MBltResultHeaderExportorImpl::Data::RodEleMsg(int NEle, int GId)
 	return msg;
 }
 // TODO NPAR 参数
-QString MBltResultHeaderExportorImpl::Data::ShellEleMsg(int NEle, int GId){
+QString MBltResultExportorImpl::Data::ShellEleMsg(int NEle, int GId){
 	QString msg = " E L E M E N T  D E F I N I T I O N \n";
 	msg += "\n\n";
 	msg += " ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ). . =    6 \n";
@@ -1524,7 +1514,7 @@ QString MBltResultHeaderExportorImpl::Data::ShellEleMsg(int NEle, int GId){
 
 	return msg;
 }
-QString MBltResultHeaderExportorImpl::Data::BeamEleMsg(int Nele, int gid){
+QString MBltResultExportorImpl::Data::BeamEleMsg(int Nele, int gid){
 	QString msg = " E L E M E N T  D E F I N I T I O N \n";
 	msg += "\n\n";
 	msg += " ELEMENT TYPE  . . . . . . . . . . . . .( NPAR(1) ). . =    4 \n";
@@ -1590,3 +1580,4 @@ QString MBltResultHeaderExportorImpl::Data::BeamEleMsg(int Nele, int gid){
 	msg += " \n\n";
 	return msg;
 }
+

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin spec="2.0" name="org.sipesc.fems.hexa12geostress" version="2.0.0" icon=":/sipesc/images/org.sipesc.fems.gnonlinearanalysis/provider-icon.png" label="org.sipesc.fems.hexa12geostress" author="SiPESC Software Group" copyright="Designed and implemented by SiPESC Software Group." description="stress stiffness matrix for geometrical analysis">
+  <feature name="org.sipesc.fems.hexa12geostress" version="2.0.0" label="org.sipesc.fems.hexa12geostress" documenturl="sipdoc://org.sipesc.fems.geostressstiff/overview.html">
+    <extension name="MHexaBrick12EleStressStiffCalculatorFactory" uuid="{68ec6367-f0de-4cfa-857b-f40b5ed0ee2b}" creatable="true" scriptable="true" description="to construct object of MHexabrick12EleStressStiffCalculator" category="fems.factory.elestressstiffcalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12GMatrixFactory" uuid="{b9c90b2f-b9ea-4fbb-be21-b6cec178562a}" creatable="true" scriptable="true" description="to construct object of MHexaBrick12GMatrix" category="fems.factory.stressstiffgmatrix">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12SMatrixFactory" uuid="{90b630cd-35f4-4f6a-8acb-7b58ec464a5b}" creatable="true" scriptable="true" category="fems.factory.stressstiffsmatrix">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleStressStiffGMatrix" uuid="{3a1e4976-f3a6-404a-8f9d-20109990f4fd}" creatable="true" scriptable="true" description="calculator the G matrix of hexahedron brick element with 12 nodes" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.geostress.MEleStressStiffGMatrix"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleInterForceCalculatorFactory" uuid="{55afab4b-3533-4f4c-bade-7b704ea8aca9}" creatable="true" scriptable="true" description="factory for hexagon brick element internal force calculator with 12 nodes" category="fems.factory.eleinterforce">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleDeformGradTensorCalculatorFactory" uuid="{529e754c-3d72-464f-8a01-3acfbbb37707}" creatable="true" scriptable="true" description="factory for  deformation gradient calcualtor of hexagon brick element with 12 nodes" category="fems.factory.deformgradcalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleJaccobianMatrixFactory" uuid="{d8280308-f0e1-4f60-a270-4288ad33eb44}" creatable="true" scriptable="true" description="factory  for the Jacobian calculator of hexagon brick with 12 nodes" category="fems.factory.jaccobianmatrix">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MHexaBrick12EleJaccobianMatrix" uuid="{c0f2fbb7-2465-43a6-a924-e6b8fb7b8501}" creatable="true" scriptable="true" description="jaccobian matrix for hexagon brick element with 12 nodes" category="org.sipesc.fems">
+      <bases>
+        <base name="org.sipesc.fems.matrictensor.MElementJaccobianMatrix"/>
+      </bases>
+    </extension>
+    <extension name="MBrickEleGreenStrainCalculatorFactory" uuid="{e890c2ee-c214-44ed-b552-28915bf6ebb0}" creatable="true" scriptable="true" category="fems.factory.greenstraincalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+    <extension name="MBrickEleCauchyStressCalculatorFactory" uuid="{21e0b8cc-92ac-4381-825b-9bf3a35976b0}" creatable="true" scriptable="true" category="fems.factory.cauchystresscalculator">
+      <bases>
+        <base name="org.sipesc.utilities.MExtensionFactory"/>
+      </bases>
+    </extension>
+  </feature>
+</plugin>

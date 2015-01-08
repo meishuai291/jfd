@@ -1,13 +1,13 @@
-#ifndef ORG_SIPESC_FEMS_BLTDATAPROCESS_H
-#define ORG_SIPESC_FEMS_BLTDATAPROCESS_H
+#ifndef ORG_SIPESC_FEMS_JFDDATAIMPORTOR_H
+#define ORG_SIPESC_FEMS_JFDDATAIMPORTOR_H
 
 #include <mplugin.h>
 
-class OrgSipescFemsBltdataprocessPlugin:public MPluginObject
+class OrgSipescFemsJfddataimportorPlugin:public MPluginObject
   {
   public:
-    OrgSipescFemsBltdataprocessPlugin();
-    virtual ~OrgSipescFemsBltdataprocessPlugin();
+    OrgSipescFemsJfddataimportorPlugin();
+    virtual ~OrgSipescFemsJfddataimportorPlugin();
   public:
     bool initialize();
     bool cleanup();
@@ -46,9 +46,8 @@ class OrgSipescFemsBltdataprocessPlugin:public MPluginObject
     MExtensionObject* createOrgSipescFemsJfdimportMJfdShellElementHandler();
     MExtensionObject* createOrgSipescFemsJfdimportMJfdBeamElementHandlerFactory();
     MExtensionObject* createOrgSipescFemsJfdimportMJfdBeamElementHandler();
-    MExtensionObject* createOrgSipescFemsBltexportMBltDataExportor();
   private:
     bool _running;
   };
 
-#endif /* ORG_SIPESC_FEMS_BLTDATAPROCESS_H */
+#endif /* ORG_SIPESC_FEMS_JFDDATAIMPORTOR_H */

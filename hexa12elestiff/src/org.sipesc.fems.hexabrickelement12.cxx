@@ -75,7 +75,17 @@ void OrgSipescFemsHexabrickelement12Plugin::stop()
 QStringList OrgSipescFemsHexabrickelement12Plugin::
 getRequiredFeatures() const
   {
-  return QStringList();
+	  QStringList result;
+	  result.append(QLatin1String("org.sipesc.utilities"));
+	  result.append(QLatin1String("org.sipesc.core.utility"));
+	  result.append(QLatin1String("org.sipesc.core.engdbs.data"));
+	  result.append(QLatin1String("org.sipesc.fems.data"));
+	  result.append(QLatin1String("org.sipesc.fems.matrix"));
+	  result.append(QLatin1String("org.sipesc.fems.element"));
+	  result.append(QLatin1String("org.sipesc.fems.global"));
+	  result.append(QLatin1String("org.sipesc.fems.femsutils"));
+	  result.append(QLatin1String("org.sipesc.fems.matrictensor"));
+	  return result;
   }
 
 MExtensionObject* OrgSipescFemsHexabrickelement12Plugin

@@ -86,7 +86,7 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 		if(!ok)
 			std::cout << apList[i].toStdString() << " Load Failed." << std::endl;
 	}
-	std::cout << "All Plugins have Loaded." << std::endl;
+	std::cout << "All Available Plugins have been Loaded." << std::endl;
 
 	// 隐式
 	QStringList apList2;
@@ -119,21 +119,11 @@ void Test::initTestCase(const QString& programName, const QString& workSpace)
 	_db = dbManager.createDatabase("org.sipesc.engdbs");
 	ok = _db.open(option, false);
 	Q_ASSERT(ok);
-	ok = _db.clear();
-	Q_ASSERT(ok);
 
 	_model = dbManager.createDataModel();
 	ok = _model.open(_db, "FemsEngdbs");
 	Q_ASSERT(ok);
-	ok = _model.clear();
-	Q_ASSERT(ok);
 	_modelOri = _model;
-
-	MDataManager localCoords = dbManager.createDataManager();
-	ok = localCoords.open(_model, "LocalCoordTransMatrix", false);
-	Q_ASSERT(ok);
-	ok = localCoords.clear();
-	Q_ASSERT(ok);
 
 	return;
 }
@@ -235,7 +225,7 @@ void Test::parseAnalysisType(const QString& type){
 		_taskCommands.erase(vi-1);
 	}
 
-	#if 0
+	#if 1
 	QVector<QString> cmds;
 	cmds << "org.sipesc.fems.femstask.MNodeMapManager";
 	cmds << "org.sipesc.fems.femstask.MNodeSortByRAD";
@@ -245,10 +235,11 @@ void Test::parseAnalysisType(const QString& type){
 	cmds << "org.sipesc.fems.controlmatrix.MElementLocalCoordTransStandardManager";
 	cmds << "org.sipesc.fems.controlmatrix.MElementControlMatrixStandardManager";
 	cmds << "org.sipesc.fems.femstask.MElementMassManager";
-	cmds << "org.sipesc.fems.inistrainanalysis.MInitStrainAnalysisManager";
+	cmds << "org.sipesc.fems.inistrain.MInitStrainAnalysisManager";
+	cmds << "org.sipesc.fems.femstask.MResultsManager";
 	cmds << "org.sipesc.fems.femstask.MDisplacementsManager";
-	cmds << "org.sipesc.fems.stress.MSolidNodeStressManager";
-	cmds << "org.sipesc.fems.jfxexport.MJifexUnvExportor";
+//	cmds << "org.sipesc.fems.stress.MSolidNodeStressManager";
+//	cmds << "org.sipesc.fems.jfxexport.MJifexUnvExportor";
 	_taskCommands = cmds;
 	#endif
 
@@ -325,7 +316,12 @@ bool Test::solveIn(const QString& fileBaseName){
 			"org.sipesc.utilities.MSimpleProgressIndicator"); //indicator
 	Q_ASSERT(!indicator.isNull());
 
-	bool ok;
+	MDatabaseManager dbManager = _objectManager.getObject(
+			"org.sipesc.core.engdbs.mdatabasemanager");
+	MDataManager localCoords = dbManager.createDataManager();
+	bool ok = localCoords.open(_model, "LocalCoordTransMatrix", false);
+	Q_ASSERT(ok);
+
 	int count = _taskCommands.count();
 	for (int iCmds = 0; iCmds < count; iCmds++)
 	{

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin spec="2.0" name="org.sipesc.fems.bltdataprocess" version="2.0.0" icon=":/sipesc/images/org.sipesc.fems.bltdataprocess/provider-icon.png" label="org.sipesc.fems.bltdataprocess" author="SiPESC Software Group" copyright="Designed and implemented by SiPESC Software Group." documenturl="sipdoc://org.sipesc.fems.bltdataprocess/overview.html" description="BLT数据处理：*.jfd数据导入，*.out数据导出">
+<plugin spec="2.0" name="org.sipesc.fems.jfddataimportor" version="2.0.0" icon=":/sipesc/images/org.sipesc.fems.bltdataprocess/provider-icon.png" label="org.sipesc.fems.bltdataprocess" author="SiPESC Software Group" copyright="Designed and implemented by SiPESC Software Group." documenturl="sipdoc://org.sipesc.fems.bltdataprocess/overview.html" description="BLT数据处理：*.jfd数据导入">
   <feature name="org.sipesc.fems.jfdimport" version="2.0.0" label="org.sipesc.fems.jfdimport" documenturl="sipdoc://org.sipesc.fems.jfdimport/overview.html" description="*.jfd数据导入">
     <extension name="MJfdDataImportorFactory" uuid="{ca660282-d5d1-4955-989e-8a54c5ccdfdd}" creatable="true" scriptable="true" description="Jfd数据读入总控文件的工厂" category="fems.factory.dataimportor">
       <bases>
@@ -140,13 +140,6 @@
     <extension name="MJfdBeamElementHandler" uuid="{443bf52d-a060-4c11-9e65-cd1ba143e4fb}" creatable="true" scriptable="true" description="beam" category="org.sipesc.fems.jfdimport">
       <bases>
         <base name="org.sipesc.fems.jfdimport.MJfdSubEntryHandler"/>
-      </bases>
-    </extension>
-  </feature>
-  <feature name="org.sipesc.fems.bltexport" version="2.0.0" label="org.sipesc.fems.bltexport" documenturl="sipdoc://org.sipesc.fems.bltexport/overview.html" description="*.out数据导出">
-    <extension name="MBltDataExportor" uuid="{c129246f-bd12-49df-9954-3015881ed19e}" creatable="true" scriptable="true" description="export *.out file" category="org.sipesc.fems.bltexport">
-      <bases>
-        <base name="org.sipesc.utilities.MTaskManager"/>
       </bases>
     </extension>
   </feature>

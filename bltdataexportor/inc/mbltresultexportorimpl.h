@@ -23,11 +23,11 @@ public:
 	virtual ~MBltResultExportorImpl();
 public:
 
-	bool initialize(MDataModel& model, bool isRepeated);
+	bool initialize(MDataModel& model, bool isRepeated=false);
 
 	ProgressMonitor getProgressMonitor() const;
 
-	bool dataExport(QTextStream* stream, const QString& name);
+	bool dataExport(QTextStream* stream);
 
 private:
   class Data;

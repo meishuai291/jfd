@@ -20,7 +20,7 @@
 #include <org.sipesc.core.utility.utilitymanager.h>
 
 #include <mbltresultheaderexportorimpl.h>
-//#include <mbltresultexportorimpl.h>
+#include <mbltresultexportorimpl.h>
 
 using namespace org::sipesc::core::engdbs::data;
 using org::sipesc::core::utility::UtilityManager;
@@ -111,6 +111,10 @@ bool MBltDataExportorImpl::start(const QVariant& control){
 	MBltResultHeaderExportorImpl headerEpt;
 	headerEpt.initialize(_data->_model);
 	headerEpt.dataExport(&outStream, fileName);
+
+	MBltResultExportorImpl resEpt;
+	resEpt.initialize(_data->_model);
+	resEpt.dataExport(&outStream);
 
 	outFile.close();
 

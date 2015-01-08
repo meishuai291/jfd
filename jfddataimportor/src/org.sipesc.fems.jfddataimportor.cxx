@@ -1,4 +1,4 @@
-#include <org.sipesc.fems.bltdataprocess.h>
+#include <org.sipesc.fems.jfddataimportor.h>
 
 #include <QTextCodec>
 
@@ -27,46 +27,39 @@
 #include <mjfdbeamelementhandlerimpl.h>
 #include <mjfdbeamelementhandlerfactoryimpl.h>
 
-
-//
-#include <mbltdataexportorimpl.h>
-//#include <mjfddataexportorimpl.h>
-//#include <mjfdnodedataexportorimpl.h>
-
-OrgSipescFemsBltdataprocessPlugin::OrgSipescFemsBltdataprocessPlugin()
+OrgSipescFemsJfddataimportorPlugin::OrgSipescFemsJfddataimportorPlugin()
   {
   _running=false;
   }
 
-OrgSipescFemsBltdataprocessPlugin::~OrgSipescFemsBltdataprocessPlugin()
+OrgSipescFemsJfddataimportorPlugin::~OrgSipescFemsJfddataimportorPlugin()
   {
   }
 
-bool OrgSipescFemsBltdataprocessPlugin::initialize()
+bool OrgSipescFemsJfddataimportorPlugin::initialize()
   {
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-
-  return true;
+	return true;
   }
 
-bool OrgSipescFemsBltdataprocessPlugin::cleanup()
+bool OrgSipescFemsJfddataimportorPlugin::cleanup()
   {
   return true;
   }
 
-void OrgSipescFemsBltdataprocessPlugin::start()
+void OrgSipescFemsJfddataimportorPlugin::start()
   {
   if(_running) return;
   _running=true;
   }
 
-void OrgSipescFemsBltdataprocessPlugin::stop()
+void OrgSipescFemsJfddataimportorPlugin::stop()
   {
   if(!_running) return;
   _running=false;
   }
 
-QStringList OrgSipescFemsBltdataprocessPlugin::
+QStringList OrgSipescFemsJfddataimportorPlugin::
 getRequiredFeatures() const
   {
 	  QStringList result;
@@ -81,123 +74,118 @@ getRequiredFeatures() const
 	  return result;
   }
 
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdDataImportorFactory()
   {
-	  return new MJfdDataImportorFactoryImpl;
+  return new MJfdDataImportorFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdDataImportor()
   {
-	  return new MJfdDataImportorImpl;
+  return new MJfdDataImportorImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdNodeHandlerFactory()
   {
-	  return new MJfdNodeHandlerFactoryImpl;
+  return new MJfdNodeHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdNodeHandler()
   {
-	  return new MJfdNodeHandlerImpl;
+  return new MJfdNodeHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdMPCHandlerFactory()
   {
-	  return new MJfdMPCHandlerFactoryImpl;
+  return new MJfdMPCHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdMPCHandler()
   {
-	  return new MJfdMPCHandlerImpl;
+  return new MJfdMPCHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdLineElementHandlerFactory()
   {
-	  return new MJfdLineElementHandlerFactoryImpl;
+  return new MJfdLineElementHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdLineElementHandler()
   {
-	  return new MJfdLineElementHandlerImpl;
+  return new MJfdLineElementHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfd3DSolidElementHandlerFactory()
   {
-	  return new MJfd3DSolidElementHandlerFactoryImpl;
+  return new MJfd3DSolidElementHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfd3DSolidElementHandler()
   {
-	  return new MJfd3DSolidElementHandlerImpl;
+  return new MJfd3DSolidElementHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdNLineElementHandlerFactory()
   {
-	  return new MJfdNLineElementHandlerFactoryImpl;
+  return new MJfdNLineElementHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdNLineElementHandler()
   {
-	  return new MJfdNLineElementHandlerImpl;
+  return new MJfdNLineElementHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdCrodElementHandlerFactory()
   {
-	  return new MJfdCrodElementHandlerFactoryImpl;
+  return new MJfdCrodElementHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdCrodElementHandler()
   {
-	  return new MJfdCrodElementHandlerImpl;
+  return new MJfdCrodElementHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdForceHandlerFactory()
   {
-	  return new MJfdForceHandlerFactoryImpl;
+  return new MJfdForceHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdForceHandler()
   {
-	  return new MJfdForceHandlerImpl;
+  return new MJfdForceHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdGravHandlerFactory()
   {
-	  return new MJfdGravHandlerFactoryImpl;
+  return new MJfdGravHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdGravHandler()
   {
-	  return new MJfdGravHandlerImpl;
+  return new MJfdGravHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMTABLED5Parser()
   {
-	return new MTABLED5ParserImpl;
+  return new MTABLED5ParserImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdShellElementHandlerFactory()
   {
   return new MJfdShellElementHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdShellElementHandler()
   {
   return new MJfdShellElementHandlerImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdBeamElementHandlerFactory()
   {
   return new MJfdBeamElementHandlerFactoryImpl;
   }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
+MExtensionObject* OrgSipescFemsJfddataimportorPlugin
 ::createOrgSipescFemsJfdimportMJfdBeamElementHandler()
   {
   return new MJfdBeamElementHandlerImpl;
-  }
-MExtensionObject* OrgSipescFemsBltdataprocessPlugin
-::createOrgSipescFemsBltexportMBltDataExportor()
-  {
-  return new MBltDataExportorImpl;
   }

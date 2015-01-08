@@ -2,7 +2,11 @@
 <!DOCTYPE TS>
 <TS version="2.0" language="zh_CN">
 <context>
-    <name>OrgSipescFemsBltdataprocessPlugin</name>
+    <name>OrgSipescFemsJfddataimportorPlugin</name>
+    <message>
+        <source>org.sipesc.fems.bltdataprocess</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>SiPESC Software Group</source>
         <translation type="unfinished"></translation>
@@ -12,7 +16,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>BLTæ°æ®å¤çï¼*.jfdæ°æ®å¯¼å¥ï¼*.outæ°æ®å¯¼åº</source>
+        <source>BLTæ°æ®å¤çï¼*.jfdæ°æ®å¯¼å¥</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24,11 +28,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>å¤ç*.jfdæä»¶ä¸­çshellæ°æ®</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>å¤ç*.jfdæä»¶ä¸­çGravæ°æ®</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>the factory for MJfdMPCHandler.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>beam</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -72,7 +84,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>the factory for MJfdShellElementHandler.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the factory for MJfd3DSolidElementHandler.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the factory for MJfdBeamElementHandler.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -121,30 +141,6 @@
     </message>
     <message>
         <source>å¤ç*.jfdæä»¶ä¸­çFORCEæ°æ®</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>*.outæ°æ®å¯¼åº</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>export *.out file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>å¤ç*.jfdæä»¶ä¸­çshellæ°æ®</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>the factory for MJfdShellElementHandler.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>beam</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>the factory for MJfdBeamElementHandler.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
