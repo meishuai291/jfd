@@ -7,6 +7,7 @@
 
 #include <mbltdataexportorimpl.h>
 
+#include <qdatetime.h>
 #include <qdebug.h>
 #include <qfile.h>
 #include <qtextstream.h>
@@ -19,7 +20,6 @@
 #include <org.sipesc.core.engdbs.data.mdatamanager.h>
 #include <org.sipesc.core.utility.utilitymanager.h>
 
-#include <mbltresultheaderexportorimpl.h>
 #include <mbltresultexportorimpl.h>
 
 using namespace org::sipesc::core::engdbs::data;
@@ -108,9 +108,24 @@ bool MBltDataExportorImpl::start(const QVariant& control){
 	outStream.setCodec("UTF-8");
 	outStream.setDevice(&outFile); //定义文件的数据流
 
-	MBltResultHeaderExportorImpl headerEpt;
-	headerEpt.initialize(_data->_model);
-	headerEpt.dataExport(&outStream, fileName);
+	//- 数据头 -------------------------------------------------------------------
+	QDate d = QDate::currentDate();
+	QTime t = QTime::currentTime();
+	outStream << QString("\n         欢迎使用《开放式结构有限元分析系统SiPESC.FEMS》\n");
+	outStream << QString("             研制单位 : 大连理工大学 工程力学系\n\n");
+	outStream << QString("         计算日期 :         ")
+			<< QString::number(d.year(), 10) << "           "
+			<< QString::number(d.month(), 10) << "          "
+			<< QString::number(d.day(), 10) << "\n";
+	outStream << QString("         计算时间 :         ")
+				<< QString::number(t.hour(), 10) << "           "
+				<< QString::number(t.minute(), 10) << "          "
+				<< QString::number(t.second(), 10) << "\n";
+	outStream << QString("         输入文件 ：") << "\n";
+	outStream << QString("         输出文件 ： ") << fileName << "\n";
+	outStream << "\n\n\n";
+	//- 数据头 -------------------------------------------------------------------
+
 
 	MBltResultExportorImpl resEpt;
 	resEpt.initialize(_data->_model);
